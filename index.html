@@ -18,38 +18,56 @@
 
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         h1 { color: #ea2776; margin: 0; text-transform: uppercase; font-size: 1.8rem; letter-spacing: 2px; }
+        
+        .main-container {
+            display: grid; grid-template-columns: 420px 1fr; gap: 20px; flex-grow: 1; overflow: hidden;
+        }
 
-        .main-container { display: grid; grid-template-columns: 420px 1fr; gap: 20px; flex-grow: 1; overflow: hidden; }
+        /* --- CALENDAR (Original Style) --- */
         .left-col { display: flex; flex-direction: column; gap: 15px; }
         .calendar-section { background: #161616; border-radius: 12px; border: 1px solid #333; padding: 15px; }
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: #ea2776; font-weight: bold; }
         .cal-grid { display: grid; grid-template-columns: 35px repeat(7, 1fr); gap: 6px; text-align: center; }
-        .day-name { font-size: 0.7rem; color: #666; font-weight: bold; }
+        .day-name { font-size: 0.7rem; color: #666; font-weight: bold; padding-bottom: 5px; }
         
+        .week-btn { 
+            background: #1a1a1a; color: #ea2776; border: 1px solid #333; border-radius: 4px; 
+            cursor: pointer; font-size: 0.65rem; height: 35px; display: flex; align-items: center; justify-content: center;
+        }
+
         .day-cell { 
             aspect-ratio: 1; display: flex; align-items: center; justify-content: center; 
             background: #222; border-radius: 4px; cursor: pointer; font-size: 0.85rem; 
             position: relative; transition: 0.2s; border: 2px solid transparent;
         }
-        .day-cell.active { background: #ea2776 !important; color: white; }
-        .day-cell.drag-over { border: 2px dashed #ea2776; background: #331122; }
+        .day-cell.active { background: #ea2776 !important; color: white !important; font-weight: bold; }
+        .day-cell.today { border: 2px solid #ea2776; color: #ea2776; }
+        .day-cell.drag-over { border: 2px dashed #ea2776; background: #331122; transform: scale(1.05); }
         .has-tasks::after { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #ea2776; border-radius: 50%; }
 
+        /* --- TASK SECTION (Original Style) --- */
         .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
+        .section-header { border-bottom: 2px solid #ea2776; padding-bottom: 10px; margin-bottom: 20px; }
         #task-list { flex-grow: 1; overflow-y: auto; padding-right: 10px; }
 
-        /* --- DRAGGABLE TILES --- */
-        .task-tile { 
-            background: #222; border-left: 5px solid #444; border-radius: 6px; padding: 15px; 
-            margin-bottom: 12px; position: relative; cursor: grab; user-select: none;
-        }
-        .task-tile:active { cursor: grabbing; }
-        .task-tile.dragging { opacity: 0.4; border: 2px dashed #ea2776; }
-        .task-tile.is-completed { opacity: 0.6; filter: grayscale(0.5); }
+        /* --- TILES (The Look You Liked) --- */
+        .task-tile { background: #222; border-left: 5px solid #444; border-radius: 6px; padding: 15px; margin-bottom: 12px; position: relative; cursor: grab; }
+        .task-tile.dragging { opacity: 0.4; border: 1px dashed #ea2776; }
+        .task-tile.is-completed { opacity: 0.5; filter: grayscale(0.8); border-left-color: #55ff55 !important; }
+        
+        .tile-color-1 { border-left-color: #ff5555; }
+        .tile-color-2 { border-left-color: #55ff55; }
+        .tile-color-3 { border-left-color: #5588ff; }
+        .tile-color-4 { border-left-color: #ffff55; }
         
         .tile-title { font-weight: bold; font-size: 1.1rem; color: #fff; }
-        .tile-notes { font-size: 0.85rem; color: #ccc; margin-top: 10px; white-space: pre-wrap; }
-        .btn { background: #222; border: 1px solid #444; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        
+        .tile-meta { font-size: 0.7rem; color: #aaa; display: flex; gap: 10px; margin-top: 8px; }
+        .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: #ea2776; font-weight: bold; }
+        .tile-notes { background: #1a1a1a; padding: 8px; border-radius: 4px; font-size: 0.85rem; color: #ccc; margin-top: 10px; border-left: 2px solid #444; white-space: pre-wrap; }
+
+        .btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn:hover { background: #ea2776; }
+
         #modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal { background: #161616; padding: 25px; border-radius: 12px; border: 2px solid #ea2776; width: 500px; display: flex; flex-direction: column; gap: 12px; }
         input, select, textarea { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; }
@@ -57,31 +75,51 @@
 </head>
 <body>
 
-    <header><h1>KIIS Planner</h1></header>
+    <header><h1>Task Planner</h1></header>
 
     <div class="main-container">
         <div class="left-col">
             <div class="calendar-section">
-                <div id="calendarGrid" class="cal-grid">
+                <div class="cal-header">
+                    <button class="btn" onclick="changeMonth(-1)">◀</button>
+                    <div id="monthDisplay">Month Year</div>
+                    <button class="btn" onclick="changeMonth(1)">▶</button>
+                </div>
+                <div class="cal-grid" id="calendarGrid">
                     <div></div><div class="day-name">M</div><div class="day-name">T</div><div class="day-name">W</div><div class="day-name">T</div><div class="day-name">F</div><div class="day-name">S</div><div class="day-name">S</div>
                 </div>
             </div>
-            <button class="btn" onclick="openCreateModal()" style="background:#ea2776; height: 50px;">+ NEW TILE</button>
+            <button class="btn" onclick="openCreateModal()" style="background:#ea2776; padding:18px; font-size:1.1rem; border:none;">+ CREATE NEW TILE</button>
         </div>
 
         <div class="task-section">
-            <h2 id="viewTitle">Today</h2>
+            <div class="section-header">
+                <h2 id="viewTitle" style="margin:0; font-size: 1.2rem;">Today</h2>
+            </div>
             <div id="task-list" ondragover="handleListDragOver(event)"></div>
         </div>
     </div>
 
     <div id="modal-overlay">
         <div class="modal">
+            <h2 id="modalTitle" style="color:#ea2776; margin:0">New Task</h2>
             <input type="hidden" id="editTaskId">
-            <input type="text" id="taskTitle" placeholder="Task Name">
-            <input type="date" id="taskDate">
+            <input type="text" id="taskTitle" placeholder="Title">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <input type="text" id="taskCategory" placeholder="Category">
+                <select id="taskLocation">
+                    <option>Brisbane</option><option>Ipswich</option><option>Gold Coast</option><option>TXA</option><option>BAI</option><option>Knobby</option><option>Other</option>
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns: 80px 1fr 1fr; gap:10px;">
+                <input type="text" id="taskEmoji" placeholder="📝">
+                <select id="taskColor">
+                    <option value="0">Default</option><option value="1">Red</option><option value="2">Green</option><option value="3">Blue</option><option value="4">Yellow</option>
+                </select>
+                <input type="date" id="taskDate">
+            </div>
             <textarea id="taskNotes" placeholder="Notes..."></textarea>
-            <button class="btn" style="background:#ea2776" onclick="saveTask()">SAVE</button>
+            <button class="btn" style="background:#ea2776; padding:15px;" onclick="saveTask()">SAVE CHANGES</button>
             <button class="btn" onclick="closeModal()">CANCEL</button>
         </div>
     </div>
@@ -91,55 +129,56 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        let currentNavDate = new Date();
         let selectedDateKey = new Date().toISOString().split('T')[0];
         let allTaskDates = new Set();
-        let draggedTaskId = null;
 
-        // --- CALENDAR RENDER ---
+        // --- CALENDAR LOGIC (Restored Original Look) ---
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             const headers = Array.from(grid.children).slice(0, 8);
             grid.innerHTML = ''; headers.forEach(h => grid.appendChild(h));
 
-            const now = new Date();
-            const year = now.getFullYear(); const month = now.getMonth();
+            const year = currentNavDate.getFullYear(); const month = currentNavDate.getMonth();
+            document.getElementById('monthDisplay').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentNavDate);
+
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             let startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+            let dayCounter = 1;
 
-            for (let i = 0; i < 42; i++) {
-                if (i % 7 === 0) { 
-                    const wb = document.createElement('div'); wb.innerText = 'W'; grid.appendChild(wb); 
+            for (let row = 0; row < 6; row++) {
+                if (dayCounter > daysInMonth && row > 0) break;
+                const weekBtn = document.createElement('button');
+                weekBtn.className = 'week-btn'; weekBtn.innerText = 'W'+(row+1);
+                grid.appendChild(weekBtn);
+
+                for (let col = 0; col < 7; col++) {
+                    const div = document.createElement('div');
+                    if (row * 7 + col < startOffset || dayCounter > daysInMonth) {
+                        div.className = 'day-cell' ; div.style.opacity = '0.1';
+                    } else {
+                        const dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCounter).padStart(2,'0')}`;
+                        div.className = `day-cell ${dKey === selectedDateKey ? 'active' : ''} ${allTaskDates.has(dKey) ? 'has-tasks' : ''}`;
+                        div.innerText = dayCounter;
+                        div.onclick = () => { selectedDateKey = dKey; runSearch(); renderCalendar(); };
+
+                        // Drop to Move Day
+                        div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
+                        div.ondragleave = () => div.classList.remove('drag-over');
+                        div.ondrop = (e) => {
+                            e.preventDefault(); div.classList.remove('drag-over');
+                            const id = e.dataTransfer.getData('text/plain');
+                            db.ref(`tasks/${id}`).update({ date: dKey }).then(() => { updateTaskIndicators(); runSearch(); });
+                        };
+                        dayCounter++;
+                    }
+                    grid.appendChild(div);
                 }
-                const dayNum = i - startOffset + 1;
-                const div = document.createElement('div');
-                div.className = 'day-cell';
-                
-                if (dayNum > 0 && dayNum <= daysInMonth) {
-                    const dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-                    div.innerText = dayNum;
-                    if (dKey === selectedDateKey) div.classList.add('active');
-                    if (allTaskDates.has(dKey)) div.classList.add('has-tasks');
-                    
-                    div.onclick = () => { selectedDateKey = dKey; runSearch(); renderCalendar(); };
-
-                    // Calendar Drop Zone
-                    div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
-                    div.ondragleave = () => div.classList.remove('drag-over');
-                    div.ondrop = (e) => {
-                        e.preventDefault();
-                        div.classList.remove('drag-over');
-                        const id = e.dataTransfer.getData('text/plain');
-                        db.ref(`tasks/${id}`).update({ date: dKey }).then(() => {
-                            updateTaskIndicators(); runSearch();
-                        });
-                    };
-                } else { div.style.opacity = '0'; }
-                grid.appendChild(div);
             }
         }
 
-        // --- TASK LOGIC ---
+        // --- LIST LOGIC (Restored Original Tile Style) ---
         function runSearch() {
             db.ref('tasks').orderByChild('rank').once('value', snapshot => {
                 let results = [];
@@ -147,8 +186,6 @@
                     const t = child.val();
                     if (t.date === selectedDateKey) results.push({ id: child.key, ...t });
                 });
-                
-                // Group by completion status but maintain rank within groups
                 const active = results.filter(r => !r.completed).sort((a,b) => a.rank - b.rank);
                 const completed = results.filter(r => r.completed).sort((a,b) => a.rank - b.rank);
                 displayResults([...active, ...completed]);
@@ -158,54 +195,58 @@
         function displayResults(results) {
             const list = document.getElementById('task-list');
             list.innerHTML = '';
-            results.forEach((t, index) => {
+            document.getElementById('viewTitle').innerText = selectedDateKey;
+
+            results.forEach(t => {
                 const tile = document.createElement('div');
-                tile.className = `task-tile ${t.completed ? 'is-completed' : ''}`;
+                tile.className = `task-tile tile-color-${t.color || 0} ${t.completed ? 'is-completed' : ''}`;
                 tile.draggable = true;
                 tile.dataset.id = t.id;
                 tile.dataset.completed = t.completed;
 
                 tile.innerHTML = `
-                    <div style="float:right">
-                        <button class="btn" onclick="toggleComplete('${t.id}', ${t.completed})">${t.completed ? '✕' : '✓'}</button>
+                    <div style="position:absolute; right:10px; top:10px; display:flex; gap:8px;">
+                        <button class="btn" onclick="editTile('${t.id}')">✎</button>
+                        <button class="btn" style="background:${t.completed ? '#441111' : '#114411'}" onclick="toggleComplete('${t.id}', ${t.completed})">
+                            ${t.completed ? '✕' : '✓'}
+                        </button>
                     </div>
-                    <div class="tile-title">${t.completed ? '✅ ' : ''}${t.title}</div>
+                    <div style="display:flex; gap:15px;">
+                        <div style="font-size:1.8rem">${t.completed ? '✅' : (t.emoji || '📝')}</div>
+                        <div style="flex:1">
+                            <div class="tile-title">${t.title}</div>
+                            <div class="tile-meta">
+                                <span class="tile-tag">${t.category}</span>
+                                <span style="color:#55ff55">📍 ${t.location}</span>
+                            </div>
+                        </div>
+                    </div>
                     ${t.notes ? `<div class="tile-notes">${t.notes}</div>` : ''}
                 `;
 
-                // Drag Events for Reordering
                 tile.ondragstart = (e) => {
-                    draggedTaskId = t.id;
                     e.dataTransfer.setData('text/plain', t.id);
                     setTimeout(() => tile.classList.add('dragging'), 0);
                 };
-                tile.ondragend = () => {
-                    tile.classList.remove('dragging');
-                    saveNewOrder();
-                };
+                tile.ondragend = () => { tile.classList.remove('dragging'); saveNewOrder(); };
 
                 list.appendChild(tile);
             });
         }
 
+        // --- REORDERING & MOVEMENT ---
         function handleListDragOver(e) {
             e.preventDefault();
             const list = document.getElementById('task-list');
             const draggingTile = list.querySelector('.dragging');
             const afterElement = getDragAfterElement(list, e.clientY);
-            
             if (draggingTile) {
-                const isDraggingCompleted = draggingTile.dataset.completed === 'true';
-                
-                // The Bouncer Logic
+                const isDragDone = draggingTile.dataset.completed === 'true';
                 if (afterElement == null) {
                     list.appendChild(draggingTile);
                 } else {
-                    const isTargetCompleted = afterElement.dataset.completed === 'true';
-                    // Prevent mixing groups
-                    if (isDraggingCompleted === isTargetCompleted) {
-                        list.insertBefore(draggingTile, afterElement);
-                    }
+                    const isTargetDone = afterElement.dataset.completed === 'true';
+                    if (isDragDone === isTargetDone) list.insertBefore(draggingTile, afterElement);
                 }
             }
         }
@@ -215,33 +256,31 @@
             return draggableElements.reduce((closest, child) => {
                 const box = child.getBoundingClientRect();
                 const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else { return closest; }
+                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+                else return closest;
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
         async function saveNewOrder() {
             const tiles = [...document.querySelectorAll('.task-tile')];
             const updates = {};
-            tiles.forEach((tile, index) => {
-                updates[`tasks/${tile.dataset.id}/rank`] = index;
-            });
+            tiles.forEach((tile, index) => { updates[`tasks/${tile.dataset.id}/rank`] = index; });
             await db.ref().update(updates);
         }
 
-        function toggleComplete(id, current) {
-            db.ref(`tasks/${id}`).update({ completed: !current }).then(runSearch);
-        }
-
+        function toggleComplete(id, current) { db.ref(`tasks/${id}`).update({ completed: !current }).then(runSearch); }
         function saveTask() {
             const id = document.getElementById('editTaskId').value;
             const data = {
                 title: document.getElementById('taskTitle').value,
+                category: document.getElementById('taskCategory').value || 'General',
+                location: document.getElementById('taskLocation').value,
+                emoji: document.getElementById('taskEmoji').value || '📝',
+                color: document.getElementById('taskColor').value,
                 date: document.getElementById('taskDate').value,
-                notes: document.getElementById('taskNotes').value,
+                notes: document.getElementById('taskNotes').value || '',
                 completed: false,
-                rank: Date.now() // Default rank for new tasks
+                rank: Date.now()
             };
             const ref = id ? db.ref(`tasks/${id}`) : db.ref('tasks').push();
             ref.update(data).then(() => { closeModal(); updateTaskIndicators(); runSearch(); });
@@ -255,8 +294,21 @@
             });
         }
 
-        function openCreateModal() { document.getElementById('taskDate').value = selectedDateKey; document.getElementById('modal-overlay').style.display = 'flex'; }
+        function editTile(id) {
+            db.ref(`tasks/${id}`).once('value').then(s => {
+                const t = s.val();
+                document.getElementById('editTaskId').value = id;
+                document.getElementById('taskTitle').value = t.title;
+                document.getElementById('taskCategory').value = t.category;
+                document.getElementById('taskDate').value = t.date;
+                document.getElementById('taskNotes').value = t.notes || '';
+                document.getElementById('modal-overlay').style.display = 'flex';
+            });
+        }
+
+        function openCreateModal() { document.getElementById('editTaskId').value = ''; document.getElementById('taskDate').value = selectedDateKey; document.getElementById('modal-overlay').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        function changeMonth(dir) { currentNavDate.setMonth(currentNavDate.getMonth() + dir); renderCalendar(); }
 
         updateTaskIndicators();
         runSearch();
