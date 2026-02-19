@@ -16,9 +16,11 @@
             height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
 
+        /* --- HEADER --- */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         h1 { color: #ea2776; margin: 0; text-transform: uppercase; font-size: 1.8rem; letter-spacing: 2px; }
         
+        /* --- SEARCH DRAWER --- */
         #search-drawer {
             display: none; background: #161616; padding: 15px; border-radius: 12px; 
             border: 1px solid #ea2776; margin-bottom: 15px; 
@@ -30,20 +32,21 @@
             display: grid; grid-template-columns: 420px 1fr; gap: 20px; flex-grow: 1; overflow: hidden;
         }
 
+        /* --- CALENDAR --- */
         .left-col { display: flex; flex-direction: column; gap: 15px; }
         .calendar-section { background: #161616; border-radius: 12px; border: 1px solid #333; padding: 15px; }
         .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: #ea2776; font-weight: bold; }
         .cal-grid { display: grid; grid-template-columns: 40px repeat(7, 1fr); gap: 4px; text-align: center; }
         .day-name { font-size: 0.65rem; color: #666; padding-bottom: 8px; }
         
-        /* WEEK BUTTON STYLES */
+        /* Week Button Consistency */
         .week-btn { 
             background: #222; color: #ea2776; border: none; border-radius: 4px; 
             cursor: pointer; font-size: 0.7rem; aspect-ratio: 1; transition: 0.2s;
         }
         .week-btn.active { background: #ea2776; color: white; font-weight: bold; }
 
-        /* DAY CELL STYLES - Fixed Today Visibility */
+        /* Day Cells - Fixed visibility */
         .day-cell { 
             aspect-ratio: 1; display: flex; align-items: center; justify-content: center; 
             background: #222; border-radius: 4px; cursor: pointer; font-size: 0.85rem; 
@@ -54,19 +57,25 @@
         .day-cell.other-month { opacity: 0.1; pointer-events: none; }
         .day-cell.drop-hover { background: #333 !important; border-color: #ea2776 !important; transform: scale(1.05); }
 
-        .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
+        /* --- TASK SECTION --- */
+        .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; position: relative; }
         .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ea2776; padding-bottom: 10px; margin-bottom: 20px; }
         #task-list { flex-grow: 1; overflow-y: auto; padding-right: 10px; }
 
+        /* --- SUMMARY BAR --- */
+        #week-summary { background: #000; border-top: 1px solid #333; padding: 12px 20px; display: none; flex-wrap: wrap; gap: 20px; font-size: 0.85rem; }
+        .summary-count { color: #55ff55; font-weight: bold; }
+
+        /* --- TILES --- */
         .task-tile { background: #222; border-left: 5px solid #444; border-radius: 6px; padding: 15px; margin-bottom: 12px; position: relative; cursor: grab; border-top: 1px solid #333; }
         .tile-color-1 { border-left-color: #ff5555; }
         .tile-color-2 { border-left-color: #55ff55; }
         .tile-color-3 { border-left-color: #5588ff; }
         .tile-color-4 { border-left-color: #ffff55; }
-        .tile-title { font-weight: bold; font-size: 1.1rem; color: #fff; margin-bottom: 5px; max-width: 80%; }
+        .tile-title { font-weight: bold; font-size: 1.1rem; color: #fff; margin-bottom: 5px; }
         .tile-notes { background: #1a1a1a; padding: 8px; border-radius: 4px; font-size: 0.85rem; color: #ccc; margin-top: 10px; border-left: 2px solid #444; white-space: pre-wrap; }
-        .tile-meta { font-size: 0.7rem; color: #aaa; display: flex; gap: 10px; margin-top: 8px; align-items: center; }
-        .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: #ea2776; font-weight: bold; text-transform: uppercase; }
+        .tile-meta { font-size: 0.7rem; color: #aaa; display: flex; gap: 10px; margin-top: 8px; }
+        .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: #ea2776; font-weight: bold; }
         
         .btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
         .btn:hover { background: #ea2776; border-color: #ea2776; }
@@ -74,6 +83,20 @@
         #modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal { background: #161616; padding: 25px; border-radius: 12px; border: 2px solid #ea2776; width: 500px; display: flex; flex-direction: column; gap: 12px; }
         input, select, textarea { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-family: inherit; }
+
+        /* --- PRINT/EXPORT OVERRIDES --- */
+        @media print {
+            body, .main-container, .task-section { background: white !important; color: black !important; overflow: visible !important; display: block !important; padding: 0 !important; }
+            header, .left-col, #search-drawer, .btn, .tile-actions, #printBtn { display: none !important; }
+            .task-section { border: none !important; width: 100% !important; }
+            #task-list { overflow: visible !important; }
+            .task-tile { background: white !important; border: 1px solid #ddd !important; border-left: 10px solid #333 !important; page-break-inside: avoid; color: black !important; }
+            .tile-title { color: black !important; }
+            .tile-notes { background: #f9f9f9 !important; border-left-color: #ddd !important; color: #333 !important; }
+            #week-summary { display: flex !important; border: 1px solid #ddd !important; margin-top: 20px; color: black !important; background: white !important; }
+            #viewTitle { font-size: 2rem !important; color: black !important; margin-bottom: 20px !important; }
+            .tile-tag { border: 1px solid #333 !important; color: black !important; }
+        }
     </style>
 </head>
 <body>
@@ -87,11 +110,11 @@
     </header>
 
     <div id="search-drawer">
-        <input type="text" id="globalSearch" class="search-input" placeholder="Keyword search..." oninput="runSearch()">
+        <input type="text" id="globalSearch" class="search-input" placeholder="Search tiles..." oninput="runSearch()">
         <select id="sortOrder" class="search-input" onchange="runSearch()">
             <option value="relevancy">Manual Order</option>
-            <option value="newest">Newest Created</option>
-            <option value="oldest">Oldest Created</option>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
         </select>
         <button class="btn" onclick="toggleSearch()">Close</button>
     </div>
@@ -114,10 +137,14 @@
 
         <div class="task-section">
             <div class="section-header">
-                <h2 id="viewTitle" style="margin:0; font-size: 1.2rem;">Select Date</h2>
-                <div id="resultCount" style="font-size: 0.8rem; color: #888;"></div>
+                <h2 id="viewTitle" style="margin:0; font-size: 1.2rem;">Today</h2>
+                <div style="display:flex; gap:10px; align-items: center;">
+                    <div id="resultCount" style="font-size: 0.8rem; color: #888;"></div>
+                    <button id="printBtn" class="btn" style="display:none; padding: 4px 10px; font-size: 0.7rem;" onclick="window.print()">📄 EXPORT PDF</button>
+                </div>
             </div>
             <div id="task-list"></div>
+            <div id="week-summary"></div>
         </div>
     </div>
 
@@ -155,7 +182,7 @@
 
         let currentNavDate = new Date();
         let selectedDateKey = new Date().toISOString().split('T')[0];
-        let selectedWeekIndex = null; // Tracks which week button is lit
+        let selectedWeekIndex = null;
         let currentFilter = { type: 'date', val: selectedDateKey };
 
         function toggleSearch() {
@@ -173,7 +200,6 @@
             const month = currentNavDate.getMonth();
             const todayStr = new Date().toISOString().split('T')[0];
             const monthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(currentNavDate);
-            
             document.getElementById('monthDisplay').innerText = `${monthName} ${year}`;
 
             const firstDay = new Date(year, month, 1).getDay();
@@ -183,81 +209,48 @@
 
             for (let row = 0; row < 6; row++) {
                 if (dayCounter > daysInMonth && row > 0) break;
-                
                 const weekBtn = document.createElement('button');
-                weekBtn.className = 'week-btn';
-                if (selectedWeekIndex === row) weekBtn.classList.add('active');
+                weekBtn.className = 'week-btn' + (selectedWeekIndex === row ? ' active' : '');
                 weekBtn.innerText = 'W'+(row+1);
                 grid.appendChild(weekBtn);
                 
                 let weekDates = [];
-                let weekLabel = `W${row+1} ${monthName} ${year}`;
-
                 for (let col = 0; col < 7; col++) {
                     const div = document.createElement('div');
                     if (row * 7 + col < startOffset || dayCounter > daysInMonth) {
                         div.className = 'day-cell other-month';
                     } else {
                         const dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCounter).padStart(2,'0')}`;
-                        div.className = 'day-cell';
-                        if (dKey === selectedDateKey) div.classList.add('active');
-                        if (dKey === todayStr) div.classList.add('today');
-                        
+                        div.className = 'day-cell' + (dKey === selectedDateKey ? ' active' : '') + (dKey === todayStr ? ' today' : '');
                         div.innerText = dayCounter;
-                        div.onclick = () => { 
-                            selectedDateKey = dKey; 
-                            selectedWeekIndex = null;
-                            currentFilter = {type:'date', val:dKey}; 
-                            runSearch(); 
-                            renderCalendar(); 
-                        };
+                        div.onclick = () => { selectedDateKey = dKey; selectedWeekIndex = null; currentFilter = {type:'date', val:dKey}; runSearch(); renderCalendar(); };
                         
-                        div.ondragover = (e) => { e.preventDefault(); div.classList.add('drop-hover'); };
-                        div.ondragleave = () => div.classList.remove('drop-hover');
+                        div.ondragover = (e) => e.preventDefault();
                         div.ondrop = (e) => {
-                            e.preventDefault();
-                            div.classList.remove('drop-hover');
                             const taskId = e.dataTransfer.getData('taskId');
                             if(taskId) db.ref(`tasks/${taskId}`).update({ date: dKey }).then(runSearch);
                         };
-
                         weekDates.push(dKey);
                         dayCounter++;
                     }
                     grid.appendChild(div);
                 }
-                
-                weekBtn.onclick = () => { 
-                    selectedWeekIndex = row;
-                    selectedDateKey = null;
-                    currentFilter = {type:'week', val:weekDates, label: weekLabel}; 
-                    runSearch(); 
-                    renderCalendar();
-                };
+                weekBtn.onclick = () => { selectedWeekIndex = row; selectedDateKey = null; currentFilter = {type:'week', val:weekDates, label: `W${row+1} ${monthName} ${year}`}; runSearch(); renderCalendar(); };
             }
         }
 
         function runSearch() {
             const query = document.getElementById('globalSearch').value.toLowerCase();
             const sort = document.getElementById('sortOrder').value;
-            
             db.ref('tasks').once('value', snapshot => {
                 let results = [];
                 snapshot.forEach(child => {
                     const t = child.val();
-                    let inScope = false;
-
-                    if (query) inScope = true;
-                    else if (currentFilter.type === 'date') inScope = (t.date === currentFilter.val && !t.completed);
-                    else if (currentFilter.type === 'week') inScope = (currentFilter.val.includes(t.date) && !t.completed);
-                    else if (currentFilter.type === 'archive') inScope = t.completed;
-
-                    if (!inScope) return;
-                    const matchText = `${t.title} ${t.category} ${t.location} ${t.notes || ''}`.toLowerCase();
-                    if (query && !matchText.includes(query)) return;
-                    results.push({ id: child.key, ...t });
+                    let inScope = query ? true : (currentFilter.type === 'date' ? (t.date === currentFilter.val && !t.completed) : (currentFilter.type === 'week' ? (currentFilter.val.includes(t.date) && !t.completed) : t.completed));
+                    if (inScope && (!query || `${t.title} ${t.category} ${t.location} ${t.notes || ''}`.toLowerCase().includes(query))) {
+                        results.push({ id: child.key, ...t });
+                    }
                 });
-
                 if (sort === 'newest') results.sort((a,b) => (b.created || 0) - (a.created || 0));
                 if (sort === 'oldest') results.sort((a,b) => (a.created || 0) - (b.created || 0));
                 displayResults(results);
@@ -266,13 +259,23 @@
 
         function displayResults(results) {
             const list = document.getElementById('task-list');
+            const summaryBar = document.getElementById('week-summary');
+            const printBtn = document.getElementById('printBtn');
             list.innerHTML = results.length ? '' : '<p style="text-align:center; color:#444; margin-top:50px;">No tiles found.</p>';
             document.getElementById('resultCount').innerText = `${results.length} item(s)`;
             
-            if (currentFilter.type === 'archive') document.getElementById('viewTitle').innerText = "Archive View";
-            else if (document.getElementById('globalSearch').value) document.getElementById('viewTitle').innerText = "Search Results";
-            else if (currentFilter.type === 'week') document.getElementById('viewTitle').innerText = currentFilter.label;
-            else document.getElementById('viewTitle').innerText = currentFilter.val;
+            if (currentFilter.type === 'archive') { document.getElementById('viewTitle').innerText = "Archive View"; printBtn.style.display = 'none'; }
+            else if (document.getElementById('globalSearch').value) { document.getElementById('viewTitle').innerText = "Search Results"; printBtn.style.display = 'none'; }
+            else if (currentFilter.type === 'week') { document.getElementById('viewTitle').innerText = currentFilter.label; printBtn.style.display = 'block'; }
+            else { document.getElementById('viewTitle').innerText = currentFilter.val; printBtn.style.display = 'none'; }
+
+            if (currentFilter.type === 'week' && !document.getElementById('globalSearch').value) {
+                summaryBar.style.display = 'flex';
+                const counts = {};
+                results.forEach(t => counts[t.location] = (counts[t.location] || 0) + 1);
+                summaryBar.innerHTML = '<span style="color:#ea2776; font-weight:bold; margin-right:10px;">WEEK SUMMARY:</span>' + 
+                    Object.keys(counts).map(loc => `<span>${loc}: <span class="summary-count">${counts[loc]}</span></span>`).join('');
+            } else { summaryBar.style.display = 'none'; }
 
             results.forEach(t => {
                 const tile = document.createElement('div');
@@ -280,7 +283,7 @@
                 tile.draggable = true;
                 tile.ondragstart = (e) => e.dataTransfer.setData('taskId', t.id);
                 tile.innerHTML = `
-                    <div style="position:absolute; right:10px; top:10px; display:flex; gap:8px;">
+                    <div class="tile-actions" style="position:absolute; right:10px; top:10px; display:flex; gap:8px;">
                         <button class="btn" onclick="editTile('${t.id}')" style="padding:4px 8px">✎</button>
                         <button class="btn" onclick="completeTask('${t.id}')" style="padding:4px 8px; background:#114411">✓</button>
                     </div>
@@ -303,11 +306,9 @@
 
         function saveTask() {
             const id = document.getElementById('editTaskId').value;
-            const title = document.getElementById('taskTitle').value;
-            if (!title) return alert("Title is required");
-
             const data = {
-                title: title, category: document.getElementById('taskCategory').value || 'General',
+                title: document.getElementById('taskTitle').value,
+                category: document.getElementById('taskCategory').value || 'General',
                 location: document.getElementById('taskLocation').value,
                 emoji: document.getElementById('taskEmoji').value || '📝',
                 color: document.getElementById('taskColor').value,
@@ -315,6 +316,7 @@
                 notes: document.getElementById('taskNotes').value || '',
                 completed: false
             };
+            if(!data.title) return alert("Title is required");
             const ref = id ? db.ref(`tasks/${id}`) : db.ref('tasks').push();
             if (!id) data.created = Date.now();
             ref.update(data).then(() => { closeModal(); runSearch(); });
@@ -337,26 +339,12 @@
         }
 
         function completeTask(id) {
-            if (currentFilter.type === 'archive') {
-                if(confirm("Delete this permanently?")) db.ref(`tasks/${id}`).remove().then(runSearch);
-            } else {
-                db.ref(`tasks/${id}`).update({ completed: true, completedAt: Date.now() }).then(runSearch);
-            }
+            if (currentFilter.type === 'archive') { if(confirm("Delete permanently?")) db.ref(`tasks/${id}`).remove().then(runSearch); }
+            else { db.ref(`tasks/${id}`).update({ completed: true, completedAt: Date.now() }).then(runSearch); }
         }
 
-        function openCreateModal() {
-            document.getElementById('modalTitle').innerText = "New Task";
-            document.getElementById('editTaskId').value = '';
-            document.getElementById('taskDate').value = selectedDateKey || new Date().toISOString().split('T')[0];
-            document.getElementById('modal-overlay').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('modal-overlay').style.display = 'none';
-            document.getElementById('editTaskId').value = '';
-            ['taskTitle','taskCategory','taskNotes','taskEmoji'].forEach(i => document.getElementById(i).value = '');
-        }
-
+        function openCreateModal() { document.getElementById('modalTitle').innerText = "New Task"; document.getElementById('editTaskId').value = ''; document.getElementById('taskDate').value = selectedDateKey || new Date().toISOString().split('T')[0]; document.getElementById('modal-overlay').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; document.getElementById('editTaskId').value = ''; ['taskTitle','taskCategory','taskNotes','taskEmoji'].forEach(i => document.getElementById(i).value = ''); }
         function openArchive() { currentFilter = {type:'archive'}; selectedDateKey = null; selectedWeekIndex = null; runSearch(); renderCalendar(); }
         function changeMonth(dir) { currentNavDate.setMonth(currentNavDate.getMonth() + dir); renderCalendar(); }
 
