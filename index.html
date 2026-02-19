@@ -65,7 +65,6 @@
             width: 6px; height: 6px; background-color: #ea2776;
             border-radius: 50%; box-shadow: 0 0 5px rgba(234, 39, 118, 0.5);
         }
-        .day-cell.active.has-tasks::after { background-color: white; }
 
         .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; position: relative; }
         .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ea2776; padding-bottom: 10px; margin-bottom: 20px; }
@@ -99,9 +98,12 @@
         .summary-count { color: #55ff55; font-weight: bold; }
 
         @media print {
+            body, .main-container, .task-section { background: white !important; color: black !important; overflow: visible !important; display: block !important; padding: 0 !important; }
             header, .left-col, #search-drawer, .btn, .tile-actions, #printBtn { display: none !important; }
-            .task-section { border: none !important; width: 100% !important; background: white !important; }
-            .task-tile { background: white !important; border: 1px solid #ddd !important; color: black !important; }
+            .task-section { border: none !important; width: 100% !important; }
+            .task-tile { background: white !important; border: 1px solid #ddd !important; border-left: 10px solid #333 !important; page-break-inside: avoid; color: black !important; }
+            #week-summary { display: flex !important; border: 1px solid #ddd !important; margin-top: 20px; color: black !important; }
+            .completed-divider, .is-completed { display: none !important; }
         }
     </style>
 </head>
@@ -145,7 +147,7 @@
                 <h2 id="viewTitle" style="margin:0; font-size: 1.2rem;">Today</h2>
                 <div style="display:flex; gap:10px; align-items: center;">
                     <div id="resultCount" style="font-size: 0.8rem; color: #888;"></div>
-                    <button id="printBtn" class="btn" style="display:none; padding: 4px 10px; font-size: 0.7rem;" onclick="window.print()">📄 EXPORT PDF</button>
+                    <button id="printBtn" class="btn" style="padding: 4px 10px; font-size: 0.7rem;" onclick="exportWithDynamicName()">📄 EXPORT PDF</button>
                 </div>
             </div>
             <div id="task-list"></div>
@@ -191,13 +193,33 @@
         let currentFilter = { type: 'date', val: selectedDateKey };
         let allTaskDates = new Set();
 
-        // --- GLOBAL ESCAPE KEY ---
+        // --- UPDATED PDF NAMING LOGIC ---
+        function exportWithDynamicName() {
+            const viewTitle = document.getElementById('viewTitle').innerText;
+            const originalTitle = document.title;
+            let fileName = "";
+
+            if (viewTitle.includes('W')) {
+                const parts = viewTitle.split(' '); 
+                const week = parts[0]; 
+                const year = parts[parts.length - 1];
+                const monthNum = String(currentNavDate.getMonth() + 1).padStart(2, '0');
+                fileName = `TaskPlan_${year}-${monthNum}-${week}`;
+            } else {
+                fileName = `TaskPlan_${viewTitle}`;
+            }
+
+            document.title = fileName;
+            window.print();
+            setTimeout(() => { document.title = originalTitle; }, 100);
+        }
+
         document.addEventListener('keydown', (e) => {
             if (e.key === "Escape") {
                 closeModal();
                 document.getElementById('globalSearch').value = '';
                 const today = new Date();
-                currentNavDate = new Date(); // Reset month navigation
+                currentNavDate = new Date();
                 selectedDateKey = today.toISOString().split('T')[0];
                 selectedWeekIndex = null;
                 currentFilter = { type: 'date', val: selectedDateKey };
@@ -291,7 +313,6 @@
                         else activeTasks.push(taskObj);
                     }
                 });
-
                 if (sort === 'newest') {
                     activeTasks.sort((a,b) => (b.created || 0) - (a.created || 0));
                     completedTasks.sort((a,b) => (b.created || 0) - (a.created || 0));
@@ -309,18 +330,21 @@
             list.innerHTML = (active.length || completed.length) ? '' : '<p style="text-align:center; color:#444; margin-top:50px;">No tiles found.</p>';
             document.getElementById('resultCount').innerText = `${active.length + completed.length} item(s)`;
             
-            if (query) { document.getElementById('viewTitle').innerText = "Search Results"; printBtn.style.display = 'none'; }
-            else if (currentFilter.type === 'week') { document.getElementById('viewTitle').innerText = currentFilter.label; printBtn.style.display = 'block'; }
-            else { document.getElementById('viewTitle').innerText = currentFilter.val; printBtn.style.display = 'none'; }
-
-            // Week Summary Logic
-            if (currentFilter.type === 'week' && !query) {
-                summaryBar.style.display = 'flex';
-                const counts = {};
-                active.forEach(t => counts[t.location] = (counts[t.location] || 0) + 1);
-                summaryBar.innerHTML = '<span style="color:#ea2776; font-weight:bold; margin-right:10px;">OPEN TASKS SUMMARY:</span>' + 
-                    Object.keys(counts).map(loc => `<span>${loc}: <span class="summary-count">${counts[loc]}</span></span>`).join('');
-            } else { summaryBar.style.display = 'none'; }
+            if (query) { 
+                document.getElementById('viewTitle').innerText = "Search Results"; 
+                printBtn.style.display = 'none';
+                summaryBar.style.display = 'none';
+            } else {
+                document.getElementById('viewTitle').innerText = currentFilter.type === 'week' ? currentFilter.label : currentFilter.val;
+                printBtn.style.display = 'block';
+                if (active.length > 0) {
+                    summaryBar.style.display = 'flex';
+                    const counts = {};
+                    active.forEach(t => counts[t.location] = (counts[t.location] || 0) + 1);
+                    summaryBar.innerHTML = '<span style="color:#ea2776; font-weight:bold; margin-right:10px;">OPEN TASKS SUMMARY:</span>' + 
+                        Object.keys(counts).map(loc => `<span>${loc}: <span class="summary-count">${counts[loc]}</span></span>`).join('');
+                } else { summaryBar.style.display = 'none'; }
+            }
 
             const renderTile = (t) => {
                 const tile = document.createElement('div');
@@ -363,16 +387,12 @@
             db.ref(`tasks/${id}`).once('value').then(snap => {
                 const t = snap.val();
                 let updateData = { completed: !currentStatus };
-                
                 if (!currentStatus) {
-                    // Ticking it: Save current emoji, then turn to tick
                     updateData.originalEmoji = t.emoji || '📝';
                     updateData.emoji = '✅';
                 } else {
-                    // Unticking it: Restore the original emoji
                     updateData.emoji = t.originalEmoji || '📝';
                 }
-                
                 db.ref(`tasks/${id}`).update(updateData).then(() => {
                     updateTaskIndicators();
                     runSearch();
@@ -398,9 +418,7 @@
             ref.update(data).then(() => { closeModal(); updateTaskIndicators(); runSearch(); });
         }
 
-        function deleteTask(id) {
-            if(confirm("Delete permanently?")) db.ref(`tasks/${id}`).remove().then(() => { updateTaskIndicators(); runSearch(); });
-        }
+        function deleteTask(id) { if(confirm("Delete permanently?")) db.ref(`tasks/${id}`).remove().then(() => { updateTaskIndicators(); runSearch(); }); }
 
         function editTile(id) {
             db.ref(`tasks/${id}`).once('value').then(s => {
