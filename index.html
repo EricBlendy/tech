@@ -62,8 +62,9 @@
         .task-tile { 
             background: #222; border-left: 5px solid #444; border-radius: 6px; padding: 15px; 
             margin-bottom: 12px; position: relative; border-top: 1px solid #333; 
-            cursor: pointer; transition: 0.2s; overflow: hidden;
+            cursor: grab; transition: 0.2s; overflow: hidden;
         }
+        .task-tile.dragging { opacity: 0.5; border: 2px dashed #ea2776; }
         .task-tile.is-completed { opacity: 0.4; filter: grayscale(0.5); border-left-color: #55ff55; }
         
         .tile-color-1 { border-left-color: #ff5555; }
@@ -75,13 +76,13 @@
         .tile-meta { font-size: 0.7rem; color: #aaa; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
         .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: #ea2776; font-weight: bold; }
         
-        /* Expandable Notes */
         .tile-notes { 
             max-height: 0; opacity: 0; transition: all 0.3s ease-out;
             background: #1a1a1a; padding: 0 8px; border-radius: 4px; font-size: 0.85rem; 
             color: #ccc; margin-top: 0; border-left: 2px solid #444; white-space: pre-wrap;
             overflow: hidden;
         }
+        .task-tile.expanded { cursor: default; }
         .task-tile.expanded .tile-notes { max-height: 500px; opacity: 1; margin-top: 10px; padding: 8px; }
 
         .completed-divider { display: flex; align-items: center; margin: 30px 0 15px 0; color: #ea2776; font-size: 0.7rem; font-weight: bold; letter-spacing: 2px; }
@@ -103,7 +104,7 @@
         <h1>Task Planner</h1>
         <div style="display:flex; gap:10px;">
             <button class="btn" style="background:#ea2776; border:none;" onclick="openCreateModal()">+ CREATE NEW TASK</button>
-            <button class="btn" id="searchToggleBtn" onclick="toggleSearch()">🔍 Search</button>
+            <button class="btn" onclick="toggleSearch()">🔍 Search</button>
         </div>
     </header>
 
@@ -189,13 +190,11 @@
         let activeWeekIdx = null;
         let allTaskDates = new Set();
         let draggedTaskId = null;
-        let draggedTaskStatus = null;
 
         function handleGlobalKeys(e) {
             if (e.key === "Enter" && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { openCreateModal(); }
             if (e.key === "Escape") { exitSearchToToday(); closeModal(); }
         }
-
         function handleModalKeys(e) { if (e.key === "Enter" && e.target.tagName !== 'TEXTAREA') { saveTask(); } }
 
         function exitSearchToToday() {
@@ -203,14 +202,25 @@
             document.getElementById('search-drawer').style.display = 'none';
             const today = new Date().toISOString().split('T')[0];
             currentNavDate = new Date();
-            selectedDateKey = today;
-            activeWeekIdx = null;
+            selectedDateKey = today; activeWeekIdx = null;
             currentFilter = { type: 'date', val: today };
             renderCalendar(); runSearch();
         }
 
-        function getOrdinalNum(n) { return n + (n > 10 && n < 20 ? 'th' : {1: 'st', 2: 'nd', 3: 'rd'}[n % 10] || 'th'); }
+        function getRemainingTime(deadlineStr) {
+            if (!deadlineStr) return "";
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const dl = new Date(deadlineStr + 'T00:00:00');
+            const diff = Math.ceil((dl - today) / (1000 * 60 * 60 * 24));
+            
+            if (diff < 0) return `<span style="color:#ff5555; font-weight:bold;">⚠️ OVERDUE (${Math.abs(diff)}d)</span>`;
+            if (diff === 0) return `<span style="color:#ffcc00; font-weight:bold;">🔥 Due Today</span>`;
+            if (diff === 1) return `<span style="color:#55ff55;">⏰ 1 day remaining</span>`;
+            return `<span style="color:#55ff55;">⏰ ${diff} days remaining</span>`;
+        }
 
+        function getOrdinalNum(n) { return n + (n > 10 && n < 20 ? 'th' : {1: 'st', 2: 'nd', 3: 'rd'}[n % 10] || 'th'); }
         function formatDisplayDate(dateStr) {
             if(!dateStr) return "";
             const d = new Date(dateStr + 'T00:00:00');
@@ -220,8 +230,7 @@
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             const headers = Array.from(grid.children).slice(0, 8);
-            grid.innerHTML = '';
-            headers.forEach(h => grid.appendChild(h));
+            grid.innerHTML = ''; headers.forEach(h => grid.appendChild(h));
 
             const year = currentNavDate.getFullYear();
             const month = currentNavDate.getMonth();
@@ -250,23 +259,20 @@
                         div.className = `day-cell ${dKey === selectedDateKey ? 'active' : ''} ${dKey === todayStr ? 'today' : ''} ${allTaskDates.has(dKey) ? 'has-tasks' : ''}`;
                         div.innerText = dayCounter;
                         div.onclick = () => { 
-                            document.getElementById('search-drawer').style.display = 'none';
                             selectedDateKey = dKey; activeWeekIdx = null;
                             currentFilter = {type:'date', val:dKey}; 
-                            runSearch(); renderCalendar(); 
+                            renderCalendar(); runSearch(); 
                         };
-                        weekDates.push(dKey);
-                        dayCounter++;
+                        weekDates.push(dKey); dayCounter++;
                     }
                     grid.appendChild(div);
                 }
                 const rowDates = [...weekDates];
                 const currentRow = row;
                 weekBtn.onclick = () => { 
-                    document.getElementById('search-drawer').style.display = 'none';
                     selectedDateKey = null; activeWeekIdx = currentRow; 
                     currentFilter = {type:'week', val:rowDates, label: `W${currentRow+1} ${document.getElementById('monthDisplay').innerText}`}; 
-                    runSearch(); renderCalendar(); 
+                    renderCalendar(); runSearch(); 
                 };
             }
         }
@@ -293,20 +299,32 @@
                 if (sort === 'newest') active.sort((a,b) => b.created - a.created);
                 else if (sort === 'oldest') active.sort((a,b) => a.created - b.created);
                 else active.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-                displayResults(active, completed, query);
+                displayResults(active, completed, !!query);
             });
         }
 
-        function displayResults(active, completed, query) {
+        function displayResults(active, completed, isSearching) {
             const list = document.getElementById('task-list');
             list.innerHTML = '';
-            document.getElementById('viewTitle').innerText = query ? "Search Results" : (currentFilter.type === 'week' ? currentFilter.label : formatDisplayDate(currentFilter.val));
+            document.getElementById('viewTitle').innerText = isSearching ? "Search Results" : (currentFilter.type === 'week' ? currentFilter.label : formatDisplayDate(currentFilter.val));
             document.getElementById('resultCount').innerText = `${active.length + completed.length} items`;
 
             const renderTile = (t) => {
                 const tile = document.createElement('div');
                 tile.className = `task-tile tile-color-${t.color || 0} ${t.completed ? 'is-completed' : ''}`;
+                tile.draggable = !isSearching;
                 tile.onclick = (e) => { if(!e.target.closest('.btn')) tile.classList.toggle('expanded'); };
+                
+                // Drag & Drop Handlers
+                tile.ondragstart = (e) => { draggedTaskId = t.id; tile.classList.add('dragging'); };
+                tile.ondragend = () => tile.classList.remove('dragging');
+                tile.ondragover = (e) => { e.preventDefault(); tile.style.borderTop = "4px solid #ea2776"; };
+                tile.ondragleave = () => tile.style.borderTop = "";
+                tile.ondrop = (e) => {
+                    e.preventDefault(); tile.style.borderTop = "";
+                    reorderTasks(draggedTaskId, t.id);
+                };
+
                 tile.innerHTML = `
                     <div style="position:absolute; right:10px; top:10px; display:flex; gap:8px;">
                         <button class="btn" onclick="editTile('${t.id}')" style="padding:4px 8px">✎</button>
@@ -320,7 +338,7 @@
                             <div class="tile-meta">
                                 <span class="tile-tag">${t.category || 'General'}</span>
                                 <span style="color:#55ff55">📍 ${t.location}</span>
-                                ${t.deadline ? `<span style="color:#ffcc00">⏰ Deadline: ${t.deadline}</span>` : ''}
+                                ${getRemainingTime(t.deadline)}
                             </div>
                         </div>
                     </div>
@@ -337,21 +355,36 @@
             }
         }
 
+        function reorderTasks(dragId, targetId) {
+            db.ref('tasks').once('value', snapshot => {
+                let tasks = [];
+                snapshot.forEach(c => {
+                    const t = c.val();
+                    if(t.date === currentFilter.val && !t.completed) tasks.push({id: c.key, ...t});
+                });
+                tasks.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+                const fromIdx = tasks.findIndex(t => t.id === dragId);
+                const toIdx = tasks.findIndex(t => t.id === targetId);
+                const [moved] = tasks.splice(fromIdx, 1);
+                tasks.splice(toIdx, 0, moved);
+                tasks.forEach((t, i) => db.ref(`tasks/${t.id}`).update({ sortOrder: i }));
+                runSearch();
+            });
+        }
+
         function saveTask() {
             const id = document.getElementById('editTaskId').value;
             const title = document.getElementById('taskTitle').value;
             if(!title) return alert("Title required");
             const data = {
-                title,
-                category: document.getElementById('taskCategory').value,
+                title, category: document.getElementById('taskCategory').value,
                 location: document.getElementById('taskLocation').value,
                 emoji: document.getElementById('taskEmoji').value || '📝',
                 color: document.getElementById('taskColor').value,
                 date: document.getElementById('taskDate').value,
                 deadline: document.getElementById('taskDeadline').value,
                 notes: document.getElementById('taskNotes').value,
-                completed: false,
-                created: Date.now()
+                completed: false, created: id ? Date.now() : Date.now() // Simple timestamp
             };
             const ref = id ? db.ref(`tasks/${id}`) : db.ref('tasks').push();
             ref.update(data).then(() => { closeModal(); runSearch(); updateTaskIndicators(); });
