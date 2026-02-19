@@ -51,7 +51,7 @@
         
         .task-tile { 
             background: #222; border-left: 5px solid #444; border-radius: 6px; padding: 12px 15px; 
-            margin-bottom: 12px; position: relative; border-top: 1px solid #333; cursor: grab;
+            margin-bottom: 12px; position: relative; border-top: 1px solid #333; cursor: grab; transition: box-shadow 0.3s ease;
         }
         .task-tile.is-completed { opacity: 0.4; filter: grayscale(0.5); border-left-color: #55ff55; }
         
@@ -63,7 +63,8 @@
             max-height: 0; opacity: 0; transition: all 0.3s ease-out; overflow: hidden;
             background: #111; font-size: 0.85rem; color: #ccc; white-space: pre-wrap;
         }
-        .task-tile.expanded .tile-notes { max-height: 500px; opacity: 1; margin-top: 10px; padding: 8px; border-radius: 4px; }
+        .tile-notes a { color: #5588ff !important; text-decoration: underline; pointer-events: auto; }
+        .task-tile.expanded .tile-notes { max-height: 500px; opacity: 1; margin-top: 10px; padding: 10px; border-radius: 4px; }
 
         .completed-divider { display: flex; align-items: center; margin: 30px 0 15px 0; color: var(--accent-color); font-size: 0.7rem; font-weight: bold; letter-spacing: 2px; }
         .completed-divider::after { content: ""; flex: 1; height: 1px; background: #333; margin-left: 15px; }
@@ -131,7 +132,7 @@
                         <option value="oldest">Created: Oldest</option>
                     </select>
                     <div id="resultCount" style="font-size: 0.75rem; color: #888;"></div>
-                    <button class="btn" style="padding: 4px 10px; font-size: 0.7rem; background: var(--accent-color); border:none;" onclick="exportToPDF()">📄 PDF</button>
+                    <button id="pdfExportBtn" class="btn" style="padding: 4px 10px; font-size: 0.7rem; background: var(--accent-color); border:none;" onclick="exportToPDF()">📄 PDF</button>
                 </div>
             </div>
             <div id="task-list"></div>
@@ -167,7 +168,21 @@
             <input type="hidden" id="editTaskId">
             <input type="text" id="taskTitle" placeholder="Title (Required)">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <input type="text" id="taskCategory" placeholder="Category">
+                <select id="taskCategory">
+                    <option value="General">General</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Building">Building</option>
+                    <option value="Hot Tomato">Hot Tomato</option>
+                    <option value="iHeart Country">iHeart Country</option>
+                    <option value="IT Service Desk">IT Service Desk</option>
+                    <option value="KIIS 973">KIIS 973</option>
+                    <option value="Lowie Live">Lowie Live</option>
+                    <option value="News">News</option>
+                    <option value="Production">Production</option>
+                    <option value="Reminder">Reminder</option>
+                    <option value="River 94.9">River 94.9</option>
+                    <option value="Technology">Technology</option>
+                </select>
                 <select id="taskLocation">
                     <option>Brisbane</option><option>Ipswich</option><option>Gold Coast</option><option>TXA</option><option>BAI</option><option>Knobby</option><option>Other</option>
                 </select>
@@ -176,8 +191,33 @@
                 <div><label style="font-size:0.7rem; color:#888;">Task Date</label><input type="date" id="taskDate" style="width:100%"></div>
                 <div><label style="font-size:0.7rem; color:#888;">Deadline</label><input type="date" id="taskDeadline" style="width:100%"></div>
             </div>
-            <div style="display:grid; grid-template-columns: 80px 1fr; gap:10px;">
-                <input type="text" id="taskEmoji" placeholder="📝">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <select id="taskEmoji">
+                    <option value="📝">📝 Notepad</option>
+                    <option value="📢">📢 Announcement</option>
+                    <option value="🔔">🔔 Alert</option>
+                    <option value="💬">💬 Chat</option>
+                    <option value="🔎">🔎 Search</option>
+                    <option value="💻">💻 Computer</option>
+                    <option value="⏰">⏰ Timer</option>
+                    <option value="🎙">🎙 Mic</option>
+                    <option value="📻">📻 Radio</option>
+                    <option value="📷">📷 Camera</option>
+                    <option value="📺">📺 TV</option>
+                    <option value="🎵">🎵 Music</option>
+                    <option value="🔑">🔑 Key</option>
+                    <option value="🎁">🎁 Gift</option>
+                    <option value="🎉">🎉 Party</option>
+                    <option value="📒">📒 Ledger</option>
+                    <option value="💰">💰 Money</option>
+                    <option value="🩷">🩷 Heart</option>
+                    <option value="🚗">🚗 Car</option>
+                    <option value="🍔">🍔 Food</option>
+                    <option value="🔥">🔥 Fire</option>
+                    <option value="💥">💥 Boom</option>
+                    <option value="🔋">🔋 Full Batt</option>
+                    <option value="🪫">🪫 Low Batt</option>
+                </select>
                 <select id="taskColor">
                     <option value="0">Default</option><option value="1">Red</option><option value="2">Green</option><option value="3">Blue</option><option value="4">Yellow</option>
                 </select>
@@ -210,6 +250,12 @@
             });
             renderCalendar(); runSearch();
         });
+
+        function linkify(text) {
+            if(!text) return "";
+            const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+            return text.replace(urlPattern, '<a href="$1" target="_blank" onclick="event.stopPropagation()">$1</a>');
+        }
 
         function syncSort(val) {
             document.getElementById('mainSort').value = val;
@@ -338,7 +384,8 @@
                 const tile = document.createElement('div');
                 tile.className = `task-tile tile-color-${t.color || 0} ${t.completed ? 'is-completed' : ''}`;
                 tile.draggable = true;
-                tile.onclick = (e) => { if(!e.target.closest('.btn')) tile.classList.toggle('expanded'); };
+                tile.dataset.id = t.id;
+                tile.onclick = (e) => { if(!e.target.closest('.btn') && !e.target.closest('a')) tile.classList.toggle('expanded'); };
                 tile.ondragstart = () => { draggedTaskId = t.id; };
                 tile.ondragover = (e) => { e.preventDefault(); tile.style.borderTop = "3px solid var(--accent-color)"; };
                 tile.ondragleave = () => { tile.style.borderTop = ""; };
@@ -346,6 +393,7 @@
 
                 tile.innerHTML = `
                     <div style="position:absolute; right:10px; top:10px; display:flex; gap:8px;">
+                        <button class="btn" style="padding:4px 8px" onclick="copyTaskLink('${t.id}', event)">🔗</button>
                         <button class="btn" style="padding:4px 8px" onclick="editTile('${t.id}')">✎</button>
                         <button class="btn" style="padding:4px 8px" onclick="toggleComplete('${t.id}', ${t.completed})">✓</button>
                         <button class="btn" style="padding:4px 8px" onclick="deleteTask('${t.id}')">🗑</button>
@@ -362,7 +410,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="tile-notes">${t.notes || 'No notes.'}</div>
+                    <div class="tile-notes">${linkify(t.notes) || 'No notes.'}</div>
                 `;
                 list.appendChild(tile);
             };
@@ -376,27 +424,53 @@
             document.getElementById('location-summary').innerHTML = Object.entries(counts).map(([l,c]) => `<span><strong>${l}:</strong> ${c}</span>`).join(' | ');
         }
 
-        async function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const accent = localStorage.getItem('accent') || '#ea2776';
-            const colors = { 1: [255, 85, 85], 2: [85, 255, 85], 3: [85, 136, 255], 4: [255, 255, 85] };
-
-            doc.setFillColor(10, 10, 10); doc.rect(0, 0, 210, 297, 'F');
-            doc.setTextColor(accent[1], accent[3], accent[5]); // Simple hex parsing
-            doc.setTextColor(234, 39, 118); doc.setFontSize(22); doc.text(document.getElementById('app-title').innerText, 15, 20);
-            
-            let y = 40;
-            cachedTasks.filter(t => currentFilter.val.includes(t.date)).forEach(t => {
-                if (y > 270) { doc.addPage(); doc.setFillColor(10, 10, 10); doc.rect(0, 0, 210, 297, 'F'); y = 20; }
-                const c = colors[t.color] || [68, 68, 68];
-                doc.setFillColor(34, 34, 34); doc.rect(15, y, 180, 16, 'F');
-                doc.setFillColor(c[0], c[1], c[2]); doc.rect(15, y, 2, 16, 'F');
-                doc.setTextColor(255, 255, 255); doc.setFontSize(11);
-                doc.text(`${t.completed ? '[DONE] ' : ''}${t.emoji || '•'} ${t.title}`, 20, y + 10);
-                y += 20;
+        function copyTaskLink(id, event) {
+            event.stopPropagation();
+            const url = `${window.location.origin}${window.location.pathname}?taskId=${id}`;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = event.currentTarget;
+                const originalText = btn.innerText;
+                btn.innerText = "COPIED!";
+                btn.style.background = "var(--highlight-color)";
+                btn.style.color = "#000";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "";
+                    btn.style.color = "";
+                }, 2000);
             });
-            doc.save('TaskPlanner.pdf');
+        }
+
+        function exportToPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const colors = { 0: [68, 68, 68], 1: [255, 85, 85], 2: [85, 255, 85], 3: [85, 136, 255], 4: [255, 255, 85] };
+
+                doc.setFillColor(10, 10, 10); doc.rect(0, 0, 210, 297, 'F');
+                doc.setTextColor(234, 39, 118); doc.setFontSize(22);
+                doc.text(document.getElementById('app-title').innerText, 15, 20);
+
+                doc.setTextColor(150, 150, 150); doc.setFontSize(10);
+                doc.text("Exported: " + new Date().toLocaleString(), 15, 28);
+
+                let y = 45;
+                const tasksToPrint = cachedTasks.filter(t => currentFilter.val.includes(t.date));
+
+                tasksToPrint.forEach(t => {
+                    if (y > 270) { doc.addPage(); doc.setFillColor(10, 10, 10); doc.rect(0, 0, 210, 297, 'F'); y = 20; }
+                    const c = colors[t.color] || colors[0];
+                    doc.setFillColor(34, 34, 34); doc.rect(15, y, 180, 18, 'F');
+                    doc.setFillColor(c[0], c[1], c[2]); doc.rect(15, y, 2, 18, 'F');
+                    doc.setTextColor(255, 255, 255); doc.setFontSize(11);
+                    const status = t.completed ? "[DONE] " : "[ ] ";
+                    doc.text(`${status} ${t.emoji || '•'} ${t.title}`, 20, y + 8);
+                    doc.setTextColor(150, 150, 150); doc.setFontSize(8);
+                    doc.text(`${t.date} | ${t.category} | ${t.location}`, 20, y + 14);
+                    y += 24;
+                });
+                doc.save('TaskExport.pdf');
+            } catch (err) { alert("Could not generate PDF. Check console."); }
         }
 
         function reorderTasks(dragId, targetId) {
@@ -428,23 +502,48 @@
             document.getElementById('modalTitle').innerText = 'Edit Task';
             document.getElementById('editTaskId').value = id;
             document.getElementById('taskTitle').value = t.title;
-            document.getElementById('taskCategory').value = t.category;
+            document.getElementById('taskCategory').value = t.category || 'General';
             document.getElementById('taskLocation').value = t.location;
             document.getElementById('taskDate').value = t.date;
             document.getElementById('taskDeadline').value = t.deadline || '';
             document.getElementById('taskNotes').value = t.notes || '';
-            document.getElementById('taskEmoji').value = t.emoji || '';
+            document.getElementById('taskEmoji').value = t.emoji || '📝';
             document.getElementById('taskColor').value = t.color || '0';
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
         function openCreateModal() {
             document.getElementById('modalTitle').innerText = 'New Task';
-            ['editTaskId','taskTitle','taskCategory','taskEmoji','taskNotes','taskDeadline'].forEach(i => document.getElementById(i).value = '');
+            ['editTaskId','taskTitle','taskNotes','taskDeadline'].forEach(i => document.getElementById(i).value = '');
+            document.getElementById('taskCategory').value = 'General';
+            document.getElementById('taskEmoji').value = '📝';
             document.getElementById('taskColor').value = '0';
             document.getElementById('taskDate').value = selectedDateKey;
             document.getElementById('modal-overlay').style.display = 'flex';
         }
+
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const taskId = urlParams.get('taskId');
+            if (taskId) {
+                setTimeout(() => {
+                    const task = cachedTasks.find(t => t.id === taskId);
+                    if (task) {
+                        selectedDateKey = task.date;
+                        currentFilter = { type: 'date', val: [task.date] };
+                        renderCalendar(); runSearch();
+                        setTimeout(() => {
+                            const tile = document.querySelector(`[data-id="${taskId}"]`);
+                            if (tile) {
+                                tile.classList.add('expanded');
+                                tile.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                tile.style.boxShadow = `0 0 20px var(--accent-color)`;
+                            }
+                        }, 500);
+                    }
+                }, 2000);
+            }
+        });
 
         function toggleComplete(id, cur) { db.ref(`tasks/${id}`).update({ completed: !cur }); }
         function deleteTask(id) { if(confirm("Delete?")) db.ref(`tasks/${id}`).remove(); }
