@@ -55,7 +55,7 @@
         }
         .day-cell.active { background: var(--accent-color) !important; color: white !important; font-weight: bold; }
         .day-cell.today { border: 2px solid var(--accent-color); color: var(--accent-color); font-weight: bold; }
-        .day-cell.drag-over { border-color: var(--highlight-color); background: #2a3a2a; }
+        .day-cell.drag-over { border-color: var(--highlight-color) !important; background: #1a2a1a; }
 
         .has-tasks::after {
             content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
@@ -86,6 +86,9 @@
         .tile-notes a { color: var(--accent-color); text-decoration: underline; }
         .task-tile.expanded .tile-notes { max-height: 500px; opacity: 1; margin-top: 10px; padding: 8px; }
 
+        .completed-divider { display: flex; align-items: center; margin: 30px 0 15px 0; color: var(--accent-color); font-size: 0.7rem; font-weight: bold; letter-spacing: 2px; }
+        .completed-divider::after { content: ""; flex: 1; height: 1px; background: #333; margin-left: 15px; }
+
         .btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn:hover { background: var(--accent-color); }
 
@@ -93,8 +96,11 @@
         .modal { background: #161616; padding: 25px; border-radius: 12px; border: 2px solid var(--accent-color); width: 500px; display: flex; flex-direction: column; gap: 12px; }
         input, select, textarea { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-family: inherit; }
 
-        .settings-row { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 10px; border-radius: 8px; }
-        .color-preview { width: 30px; height: 30px; border-radius: 4px; border: 1px solid #fff; cursor: pointer; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 12px; border-radius: 8px; margin-bottom: 5px; }
+        .tile-color-1 { border-left-color: #ff5555; }
+        .tile-color-2 { border-left-color: #55ff55; }
+        .tile-color-3 { border-left-color: #5588ff; }
+        .tile-color-4 { border-left-color: #ffff55; }
     </style>
 </head>
 <body onkeydown="handleGlobalKeys(event)">
@@ -153,7 +159,10 @@
                 <span>Drag Highlight Color</span>
                 <input type="color" id="highlightPicker" onchange="updateColors()">
             </div>
-            <button class="btn" style="background:var(--accent-color); padding:15px;" onclick="closeSettings()">SAVE & CLOSE</button>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                <button class="btn" style="background:var(--accent-color); padding:15px; border:none;" onclick="closeSettings()">SAVE & CLOSE</button>
+                <button class="btn" style="background:#444; color:#fff; border:none;" onclick="resetToDefaults()">RETURN TO DEFAULT</button>
+            </div>
         </div>
     </div>
 
@@ -186,7 +195,7 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyDdPw8VuDa1hwiwz-IXlwSw2S2sVreVzDs",
+            apiKey: "PASTE_YOUR_API_KEY_HERE",
             databaseURL: "https://techplanner-22899-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
         firebase.initializeApp(firebaseConfig);
@@ -199,10 +208,14 @@
         let allTaskDates = new Set();
         let draggedTaskId = null;
 
-        // Settings Management
+        // --- Settings Management ---
         function initSettings() {
             const acc = localStorage.getItem('accent') || '#ea2776';
             const high = localStorage.getItem('highlight') || '#55ff55';
+            applyTheme(acc, high);
+        }
+
+        function applyTheme(acc, high) {
             document.documentElement.style.setProperty('--accent-color', acc);
             document.documentElement.style.setProperty('--highlight-color', high);
             document.getElementById('accentPicker').value = acc;
@@ -212,15 +225,23 @@
         function updateColors() {
             const acc = document.getElementById('accentPicker').value;
             const high = document.getElementById('highlightPicker').value;
-            document.documentElement.style.setProperty('--accent-color', acc);
-            document.documentElement.style.setProperty('--highlight-color', high);
+            applyTheme(acc, high);
             localStorage.setItem('accent', acc);
             localStorage.setItem('highlight', high);
+        }
+
+        function resetToDefaults() {
+            if(confirm("Reset theme to original colors?")) {
+                localStorage.removeItem('accent');
+                localStorage.removeItem('highlight');
+                applyTheme('#ea2776', '#55ff55');
+            }
         }
 
         function openSettings() { document.getElementById('settings-overlay').style.display = 'flex'; }
         function closeSettings() { document.getElementById('settings-overlay').style.display = 'none'; }
 
+        // --- Core Task Logic ---
         function handleGlobalKeys(e) {
             if (e.key === "Enter" && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { openCreateModal(); }
             if (e.key === "Escape") { closeModal(); closeSettings(); }
@@ -241,6 +262,13 @@
             if (diff < 0) return `<span style="color:#ff5555; font-weight:bold;">⚠️ OVERDUE (${Math.abs(diff)}d)</span>`;
             if (diff === 0) return `<span style="color:#ffcc00; font-weight:bold;">🔥 Due Today</span>`;
             return `<span style="color:var(--highlight-color);">⏰ ${diff} day${diff === 1 ? '' : 's'} remaining</span>`;
+        }
+
+        function formatDisplayDate(dateStr) {
+            if(!dateStr) return "";
+            const d = new Date(dateStr + 'T00:00:00');
+            const ord = (n) => n + (n > 10 && n < 20 ? 'th' : {1: 'st', 2: 'nd', 3: 'rd'}[n % 10] || 'th');
+            return `${ord(d.getDate())} ${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
         }
 
         function renderCalendar() {
@@ -270,19 +298,22 @@
                         const dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCounter).padStart(2,'0')}`;
                         div.className = `day-cell ${dKey === selectedDateKey ? 'active' : ''} ${dKey === todayStr ? 'today' : ''} ${allTaskDates.has(dKey) ? 'has-tasks' : ''}`;
                         div.innerText = dayCounter;
+                        
                         div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
                         div.ondragleave = () => div.classList.remove('drag-over');
                         div.ondrop = (e) => {
                             e.preventDefault(); div.classList.remove('drag-over');
                             db.ref(`tasks/${draggedTaskId}`).update({ date: dKey }).then(() => { runSearch(); updateTaskIndicators(); });
                         };
-                        div.onclick = () => { selectedDateKey = dKey; activeWeekIdx = null; currentFilter = {type:'date', val:dKey}; renderCalendar(); runSearch(); };
+
+                        div.onclick = () => { 
+                            selectedDateKey = dKey; activeWeekIdx = null; currentFilter = {type:'date', val:dKey}; 
+                            renderCalendar(); runSearch(); 
+                        };
                         dayCounter++;
                     }
                     grid.appendChild(div);
                 }
-                const rIdx = row;
-                weekBtn.onclick = () => { selectedDateKey = null; activeWeekIdx = rIdx; currentFilter = {type:'week', val:[], label: `Week ${rIdx+1}`}; renderCalendar(); runSearch(); };
             }
         }
 
@@ -307,28 +338,33 @@
                 });
                 if (sort === 'newest') active.sort((a,b) => b.created - a.created);
                 else active.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-                displayResults(active, completed);
+                displayResults(active, completed, !!query);
             });
         }
 
-        function displayResults(active, completed) {
+        function displayResults(active, completed, isSearching) {
             const list = document.getElementById('task-list');
             list.innerHTML = '';
+            document.getElementById('viewTitle').innerText = isSearching ? "Search Results" : formatDisplayDate(currentFilter.val);
             document.getElementById('resultCount').innerText = `${active.length + completed.length} items`;
+
             const renderTile = (t) => {
                 const tile = document.createElement('div');
                 tile.className = `task-tile tile-color-${t.color || 0} ${t.completed ? 'is-completed' : ''}`;
                 tile.draggable = true;
                 tile.onclick = (e) => { if(!e.target.closest('.btn') && !e.target.closest('a')) tile.classList.toggle('expanded'); };
+                
                 tile.ondragstart = (e) => { draggedTaskId = t.id; tile.classList.add('dragging'); };
                 tile.ondragend = () => tile.classList.remove('dragging');
                 tile.ondragover = (e) => { e.preventDefault(); tile.style.borderTop = `4px solid var(--accent-color)`; };
                 tile.ondragleave = () => tile.style.borderTop = "";
                 tile.ondrop = (e) => { e.preventDefault(); reorderTasks(draggedTaskId, t.id); };
+
                 tile.innerHTML = `
                     <div style="position:absolute; right:10px; top:10px; display:flex; gap:8px;">
                         <button class="btn" onclick="editTile('${t.id}')">✎</button>
                         <button class="btn" onclick="toggleComplete('${t.id}', ${t.completed})">✓</button>
+                        <button class="btn" onclick="deleteTask('${t.id}')">🗑</button>
                     </div>
                     <div style="display:flex; gap:15px;">
                         <div style="font-size:2rem">${t.emoji || '📝'}</div>
@@ -348,7 +384,7 @@
             active.forEach(renderTile);
             if (completed.length > 0) {
                 const div = document.createElement('div'); div.className = 'completed-divider';
-                div.innerHTML = '<hr>'; list.appendChild(div);
+                div.innerHTML = '<span>COMPLETED</span>'; list.appendChild(div);
                 completed.forEach(renderTile);
             }
         }
@@ -359,6 +395,7 @@
                 tasks.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
                 const fromIdx = tasks.findIndex(t => t.id === dragId);
                 const toIdx = tasks.findIndex(t => t.id === targetId);
+                if (fromIdx < 0 || toIdx < 0) return;
                 const [moved] = tasks.splice(fromIdx, 1);
                 tasks.splice(toIdx, 0, moved);
                 tasks.forEach((t, i) => db.ref(`tasks/${t.id}`).update({ sortOrder: i }));
@@ -379,6 +416,7 @@
                 color: document.getElementById('taskColor').value,
                 completed: false, created: Date.now()
             };
+            if(!data.title) return alert("Title required");
             const ref = id ? db.ref(`tasks/${id}`) : db.ref('tasks').push();
             ref.update(data).then(() => { closeModal(); runSearch(); updateTaskIndicators(); });
         }
@@ -406,6 +444,7 @@
         }
 
         function toggleComplete(id, cur) { db.ref(`tasks/${id}`).update({ completed: !cur }).then(runSearch); }
+        function deleteTask(id) { if(confirm("Delete?")) db.ref(`tasks/${id}`).remove().then(() => { runSearch(); updateTaskIndicators(); }); }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
         function changeMonth(dir) { currentNavDate.setMonth(currentNavDate.getMonth() + dir); renderCalendar(); }
         function updateTaskIndicators() { db.ref('tasks').once('value', snapshot => { allTaskDates.clear(); snapshot.forEach(c => { if(!c.val().completed) allTaskDates.add(c.val().date); }); renderCalendar(); }); }
