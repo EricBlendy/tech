@@ -23,7 +23,7 @@
         }
 
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        h1 { color: var(--accent-color); margin: 0; text-transform: uppercase; font-size: clamp(1.2rem, 4vw, 1.8rem); letter-spacing: 2px; }
+        h1 { color: var(--accent-color); margin: 0; text-transform: uppercase; font-size: 1.8rem; letter-spacing: 2px; }
         
         #search-drawer {
             display: none; background: #161616; padding: 15px; border-radius: 12px; 
@@ -32,27 +32,10 @@
         }
         .search-input { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; }
 
-        /* SCALING LOGIC START */
+        /* FIXED DESKTOP SIZE - Standard Grid */
         .main-container {
-            display: grid; 
-            grid-template-columns: minmax(300px, 45%) 1fr; /* Ensures calendar doesn't exceed roughly half-way horizontally */
-            gap: 20px; flex-grow: 1; overflow: hidden;
+            display: grid; grid-template-columns: 420px 1fr; gap: 20px; flex-grow: 1; overflow: hidden;
         }
-
-        /* Logic for Thinner Screens (Z Fold Outer Screen / General Mobile) */
-        @media (max-width: 850px) {
-            body { overflow-y: auto; height: auto; }
-            .main-container { 
-                display: flex; 
-                flex-direction: column; 
-                overflow: visible;
-                height: auto;
-            }
-            .left-col { width: 100%; }
-            .task-section { min-height: 600px; overflow: visible; }
-            #task-list { overflow: visible; }
-        }
-        /* SCALING LOGIC END */
 
         .left-col { display: flex; flex-direction: column; gap: 15px; }
         .calendar-section { background: #161616; border-radius: 12px; border: 1px solid #333; padding: 15px; }
@@ -81,19 +64,18 @@
             width: 4px; height: 4px; background-color: var(--accent-color); border-radius: 50%;
         }
 
-        .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: clamp(10px, 3vw, 20px); overflow: hidden; }
+        .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
         #task-list { flex-grow: 1; overflow-y: auto; padding-right: 10px; }
         
         .task-tile { 
-            background: #222; border-left: 5px solid #444; border-radius: 6px; padding: clamp(10px, 2vw, 15px); 
+            background: #222; border-left: 5px solid #444; border-radius: 6px; padding: 15px; 
             margin-bottom: 12px; position: relative; border-top: 1px solid #333; 
             cursor: grab; transition: 0.2s; overflow: hidden;
         }
         .task-tile.dragging { opacity: 0.5; border: 2px dashed var(--accent-color); }
         .task-tile.is-completed { opacity: 0.4; filter: grayscale(0.5); border-left-color: #55ff55; }
         
-        /* Scalable Title Font */
-        .tile-title { font-weight: bold; font-size: clamp(0.9rem, 2.5vw, 1.1rem); color: #fff; margin-bottom: 5px; padding-right: 40px; }
+        .tile-title { font-weight: bold; font-size: 1.1rem; color: #fff; margin-bottom: 5px; }
         .tile-meta { font-size: 0.7rem; color: #aaa; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
         .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: var(--accent-color); font-weight: bold; }
         
@@ -121,6 +103,18 @@
         .tile-color-2 { border-left-color: #55ff55; }
         .tile-color-3 { border-left-color: #5588ff; }
         .tile-color-4 { border-left-color: #ffff55; }
+
+        /* MOBILE ADJUSTMENTS */
+        @media (max-width: 800px) {
+            body { overflow-y: auto; height: auto; padding: 10px; }
+            .main-container { 
+                grid-template-columns: 1fr; /* Stack columns */
+                overflow: visible; 
+            }
+            .task-section { height: 600px; } /* Give task list some height on mobile */
+            #search-drawer { grid-template-columns: 1fr; }
+            header h1 { font-size: 1.4rem; }
+        }
     </style>
 </head>
 <body onkeydown="handleGlobalKeys(event)">
@@ -128,9 +122,9 @@
     <header>
         <h1 id="app-title">Task Planner</h1>
         <div style="display:flex; gap:10px;">
-            <button class="btn" style="background:var(--accent-color); border:none;" onclick="openCreateModal()">+ CREATE NEW TASK</button>
-            <button class="btn" onclick="toggleSearch()">🔍 Search</button>
-            <button class="btn" onclick="openSettings()">⚙️ Settings</button>
+            <button class="btn" style="background:var(--accent-color); border:none;" onclick="openCreateModal()">+ NEW TASK</button>
+            <button class="btn" onclick="toggleSearch()">🔍</button>
+            <button class="btn" onclick="openSettings()">⚙️</button>
         </div>
     </header>
 
@@ -166,7 +160,7 @@
                 <h2 id="viewTitle" style="margin:0; font-size: 1.2rem;">Today</h2>
                 <div style="display:flex; align-items:center; gap:15px;">
                     <div id="resultCount" style="font-size: 0.8rem; color: #888;"></div>
-                    <button class="btn" style="padding: 4px 10px; font-size: 0.7rem;" onclick="exportToPDF()">📄 EXPORT PDF</button>
+                    <button class="btn" style="padding: 4px 10px; font-size: 0.7rem;" onclick="exportToPDF()">📄 PDF</button>
                 </div>
             </div>
             <div id="task-list"></div>
@@ -232,7 +226,7 @@
 
         let currentNavDate = new Date();
         let selectedDateKey = new Date().toISOString().split('T')[0];
-        let currentFilter = { type: 'date', val: [selectedDateKey] }; 
+        let currentFilter = { type: 'date', val: [selectedDateKey] };
         let activeWeekIdx = null;
         let allTaskDates = new Set();
         let draggedTaskId = null;
@@ -287,7 +281,6 @@
 
         function openSettings() { document.getElementById('settings-overlay').style.display = 'flex'; }
         function closeSettings() { document.getElementById('settings-overlay').style.display = 'none'; }
-
         function handleGlobalKeys(e) {
             if (e.key === "Enter" && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { openCreateModal(); }
             if (e.key === "Escape") { closeModal(); closeSettings(); }
@@ -333,7 +326,6 @@
 
             for (let row = 0; row < 6; row++) {
                 if (dayCounter > daysInMonth && row > 0) break;
-                
                 const weekDates = [];
                 const weekBtn = document.createElement('button');
                 weekBtn.className = `week-btn ${activeWeekIdx === row ? 'active' : ''}`;
@@ -349,14 +341,12 @@
                         weekDates.push(dKey);
                         div.className = `day-cell ${currentFilter.type === 'date' && dKey === selectedDateKey ? 'active' : ''} ${dKey === todayStr ? 'today' : ''} ${allTaskDates.has(dKey) ? 'has-tasks' : ''}`;
                         div.innerText = dayCounter;
-                        
                         div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
                         div.ondragleave = () => div.classList.remove('drag-over');
                         div.ondrop = (e) => {
                             e.preventDefault(); div.classList.remove('drag-over');
                             db.ref(`tasks/${draggedTaskId}`).update({ date: dKey });
                         };
-
                         div.onclick = () => { 
                             selectedDateKey = dKey; activeWeekIdx = null; currentFilter = {type:'date', val:[dKey]}; 
                             renderCalendar(); runSearch(); 
@@ -387,11 +377,9 @@
             const today = new Date().toISOString().split('T')[0];
 
             let active = [], completed = [];
-            
             cachedTasks.forEach(t => {
                 const isOverdue = t.deadline && t.deadline < today && !t.completed;
                 let inScope = query ? true : currentFilter.val.includes(t.date);
-                
                 if (inScope && (!query || `${t.title} ${t.category}`.toLowerCase().includes(query))) {
                     if (!overdueOnly || isOverdue) {
                         if (t.completed) completed.push(t); else active.push(t);
@@ -459,7 +447,6 @@
             const title = document.getElementById('app-title').innerText;
             doc.setFontSize(18); doc.text(title + " - Report", 14, 20);
             doc.setFontSize(10); doc.text("Generated: " + new Date().toLocaleString(), 14, 28);
-            
             let y = 40;
             cachedTasks.filter(t => currentFilter.val.includes(t.date)).forEach(t => {
                 if (y > 270) { doc.addPage(); y = 20; }
