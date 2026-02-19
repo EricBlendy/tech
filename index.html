@@ -48,26 +48,19 @@
             cursor: pointer; font-size: 0.65rem; height: 100%; display: flex;
             align-items: center; justify-content: center; transition: 0.2s; margin-right: 4px;
         }
-        .week-btn.active { background: #ea2776; color: white; border-color: #ea2776; font-weight: bold; }
 
         .day-cell { 
             aspect-ratio: 1; display: flex; align-items: center; justify-content: center; 
             background: #222; border-radius: 4px; cursor: pointer; font-size: 0.85rem; 
-            transition: 0.2s; border: 1px solid transparent; color: #f0f0f0; 
+            transition: 0.2s; border: 2px solid transparent; color: #f0f0f0; 
             position: relative;
         }
+        /* Highlight calendar day when dragging over it */
+        .day-cell.drag-over { border-color: #55ff55; background: #2a3a2a; transform: scale(1.1); z-index: 10; }
         .day-cell.active { background: #ea2776 !important; color: white !important; font-weight: bold; }
         .day-cell.today { border: 2px solid #ea2776; color: #ea2776; font-weight: bold; }
-        .day-cell.other-month { opacity: 0.1; pointer-events: none; }
 
-        .has-tasks::after {
-            content: ''; position: absolute; top: 4px; right: 4px;
-            width: 6px; height: 6px; background-color: #ea2776;
-            border-radius: 50%; box-shadow: 0 0 5px rgba(234, 39, 118, 0.5);
-        }
-
-        .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; position: relative; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ea2776; padding-bottom: 10px; margin-bottom: 20px; }
+        .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
         #task-list { flex-grow: 1; overflow-y: auto; padding-right: 10px; }
         
         .completed-divider {
@@ -75,51 +68,38 @@
         }
         .completed-divider::after { content: ""; flex: 1; height: 1px; background: #333; margin-left: 15px; }
 
-        .task-tile { background: #222; border-left: 5px solid #444; border-radius: 6px; padding: 15px; margin-bottom: 12px; position: relative; border-top: 1px solid #333; transition: opacity 0.3s; }
+        .task-tile { 
+            background: #222; border-left: 5px solid #444; border-radius: 6px; padding: 15px; 
+            margin-bottom: 12px; position: relative; border-top: 1px solid #333; 
+            cursor: grab; transition: transform 0.1s, opacity 0.3s;
+        }
+        .task-tile:active { cursor: grabbing; }
+        .task-tile.dragging { opacity: 0.5; transform: scale(0.98); }
+        .task-tile.drag-over { border-top: 4px solid #ea2776; }
+
         .task-tile.is-completed { opacity: 0.4; filter: grayscale(0.5); border-left-color: #55ff55; }
         
-        .tile-color-1 { border-left-color: #ff5555; }
-        .tile-color-2 { border-left-color: #55ff55; }
-        .tile-color-3 { border-left-color: #5588ff; }
-        .tile-color-4 { border-left-color: #ffff55; }
-        .tile-title { font-weight: bold; font-size: 1.1rem; color: #fff; margin-bottom: 5px; }
-        .tile-meta { font-size: 0.7rem; color: #aaa; display: flex; gap: 10px; margin-top: 8px; }
-        .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: #ea2776; font-weight: bold; }
-        .tile-notes { background: #1a1a1a; padding: 8px; border-radius: 4px; font-size: 0.85rem; color: #ccc; margin-top: 10px; border-left: 2px solid #444; white-space: pre-wrap; }
-        
-        .btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
-        .btn:hover { background: #ea2776; border-color: #ea2776; }
+        .btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn:hover { background: #ea2776; }
 
         #modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal { background: #161616; padding: 25px; border-radius: 12px; border: 2px solid #ea2776; width: 500px; display: flex; flex-direction: column; gap: 12px; }
-        input, select, textarea { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-family: inherit; }
+        input, select, textarea { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; }
 
-        #week-summary { background: #000; border-top: 1px solid #333; padding: 12px 20px; display: none; flex-wrap: wrap; gap: 20px; font-size: 0.85rem; }
-        .summary-count { color: #55ff55; font-weight: bold; }
-
-        @media print {
-            body, .main-container, .task-section { background: white !important; color: black !important; overflow: visible !important; display: block !important; padding: 0 !important; }
-            header, .left-col, #search-drawer, .btn, .tile-actions, #printBtn { display: none !important; }
-            .task-section { border: none !important; width: 100% !important; }
-            .task-tile { background: white !important; border: 1px solid #ddd !important; border-left: 10px solid #333 !important; page-break-inside: avoid; color: black !important; }
-            #week-summary { display: flex !important; border: 1px solid #ddd !important; margin-top: 20px; color: black !important; }
-            .completed-divider, .is-completed { display: none !important; }
-        }
+        #week-summary { background: #000; border-top: 1px solid #333; padding: 12px 20px; display: none; gap: 20px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Task Planner</h1>
-        <div style="display:flex; gap:10px;">
-            <button class="btn" onclick="toggleSearch()">🔍 Search</button>
-        </div>
+        <button class="btn" onclick="toggleSearch()">🔍 Search</button>
     </header>
 
     <div id="search-drawer">
         <input type="text" id="globalSearch" class="search-input" placeholder="Search keywords..." oninput="runSearch()">
         <select id="sortOrder" class="search-input" onchange="runSearch()">
-            <option value="relevancy">Standard View</option>
+            <option value="manual">Manual Sort</option>
             <option value="newest">Newest First</option>
         </select>
         <button class="btn" onclick="toggleSearch()">Close</button>
@@ -143,12 +123,9 @@
         </div>
 
         <div class="task-section">
-            <div class="section-header">
+            <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #ea2776; padding-bottom:10px; margin-bottom:20px;">
                 <h2 id="viewTitle" style="margin:0; font-size: 1.2rem;">Today</h2>
-                <div style="display:flex; gap:10px; align-items: center;">
-                    <div id="resultCount" style="font-size: 0.8rem; color: #888;"></div>
-                    <button id="printBtn" class="btn" style="padding: 4px 10px; font-size: 0.7rem;" onclick="exportWithDynamicName()">📄 EXPORT PDF</button>
-                </div>
+                <button id="printBtn" class="btn" style="padding: 4px 10px; font-size: 0.7rem;" onclick="exportWithDynamicName()">📄 EXPORT PDF</button>
             </div>
             <div id="task-list"></div>
             <div id="week-summary"></div>
@@ -160,19 +137,11 @@
             <h2 id="modalTitle" style="color:#ea2776; margin:0">New Task</h2>
             <input type="hidden" id="editTaskId">
             <input type="text" id="taskTitle" placeholder="Title">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <input type="text" id="taskCategory" placeholder="Category">
-                <select id="taskLocation">
-                    <option>Brisbane</option><option>Ipswich</option><option>Gold Coast</option><option>TXA</option><option>BAI</option><option>Knobby</option><option>Other</option>
-                </select>
-            </div>
-            <div style="display:grid; grid-template-columns: 80px 1fr 1fr; gap:10px;">
-                <input type="text" id="taskEmoji" placeholder="📝">
-                <select id="taskColor">
-                    <option value="0">Default</option><option value="1">Red</option><option value="2">Green</option><option value="3">Blue</option><option value="4">Yellow</option>
-                </select>
-                <input type="date" id="taskDate">
-            </div>
+            <input type="text" id="taskCategory" placeholder="Category">
+            <select id="taskLocation">
+                <option>Brisbane</option><option>Ipswich</option><option>Gold Coast</option><option>TXA</option><option>BAI</option><option>Knobby</option><option>Other</option>
+            </select>
+            <input type="date" id="taskDate">
             <textarea id="taskNotes" placeholder="Notes..."></textarea>
             <button class="btn" style="background:#ea2776; padding:15px;" onclick="saveTask()">SAVE CHANGES</button>
             <button class="btn" onclick="closeModal()">CANCEL</button>
@@ -189,26 +158,70 @@
 
         let currentNavDate = new Date();
         let selectedDateKey = new Date().toISOString().split('T')[0];
-        let selectedWeekIndex = null;
         let currentFilter = { type: 'date', val: selectedDateKey };
-        let allTaskDates = new Set();
+        let draggedTaskId = null;
+        let draggedTaskStatus = null;
 
-        // --- UPDATED PDF NAMING LOGIC ---
+        // --- DRAG AND DROP LOGIC ---
+
+        function handleTileDragStart(e, id, status) {
+            draggedTaskId = id;
+            draggedTaskStatus = status;
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', id);
+        }
+
+        function handleTileDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.task-tile').forEach(t => t.classList.remove('drag-over'));
+        }
+
+        // List sorting logic
+        function onTileDrop(e, targetId, targetStatus) {
+            e.preventDefault();
+            if (draggedTaskStatus !== targetStatus) return; // Prevent mixing sections
+            if (draggedTaskId === targetId) return;
+
+            db.ref('tasks').once('value', snapshot => {
+                let tasks = [];
+                snapshot.forEach(child => {
+                    const t = child.val();
+                    if (t.date === currentFilter.val && t.completed === targetStatus) {
+                        tasks.push({ id: child.key, ...t });
+                    }
+                });
+                tasks.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+                const dragIdx = tasks.findIndex(t => t.id === draggedTaskId);
+                const [draggedItem] = tasks.splice(dragIdx, 1);
+                const dropIdx = tasks.findIndex(t => t.id === targetId);
+                tasks.splice(dropIdx, 0, draggedItem);
+
+                tasks.forEach((t, index) => {
+                    db.ref(`tasks/${t.id}`).update({ sortOrder: index });
+                });
+                runSearch();
+            });
+        }
+
+        // Calendar Rescheduling Logic
+        function onCalendarDrop(e, newDate) {
+            e.preventDefault();
+            e.target.classList.remove('drag-over');
+            if (draggedTaskId) {
+                db.ref(`tasks/${draggedTaskId}`).update({ date: newDate }).then(() => {
+                    runSearch();
+                    updateTaskIndicators();
+                });
+            }
+        }
+
+        // --- CORE FUNCTIONS ---
+
         function exportWithDynamicName() {
             const viewTitle = document.getElementById('viewTitle').innerText;
             const originalTitle = document.title;
-            let fileName = "";
-
-            if (viewTitle.includes('W')) {
-                const parts = viewTitle.split(' '); 
-                const week = parts[0]; 
-                const year = parts[parts.length - 1];
-                const monthNum = String(currentNavDate.getMonth() + 1).padStart(2, '0');
-                fileName = `TaskPlan_${year}-${monthNum}-${week}`;
-            } else {
-                fileName = `TaskPlan_${viewTitle}`;
-            }
-
+            let fileName = viewTitle.includes('W') ? `TaskPlan_${currentNavDate.getFullYear()}-${String(currentNavDate.getMonth()+1).padStart(2,'0')}-${viewTitle.split(' ')[0]}` : `TaskPlan_${viewTitle}`;
             document.title = fileName;
             window.print();
             setTimeout(() => { document.title = originalTitle; }, 100);
@@ -216,34 +229,13 @@
 
         document.addEventListener('keydown', (e) => {
             if (e.key === "Escape") {
-                closeModal();
-                document.getElementById('globalSearch').value = '';
-                const today = new Date();
+                const today = new Date().toISOString().split('T')[0];
                 currentNavDate = new Date();
-                selectedDateKey = today.toISOString().split('T')[0];
-                selectedWeekIndex = null;
-                currentFilter = { type: 'date', val: selectedDateKey };
-                renderCalendar();
-                runSearch();
+                selectedDateKey = today;
+                currentFilter = { type: 'date', val: today };
+                renderCalendar(); runSearch();
             }
         });
-
-        function toggleSearch() {
-            const drawer = document.getElementById('search-drawer');
-            drawer.style.display = (drawer.style.display === 'grid') ? 'none' : 'grid';
-            if(drawer.style.display === 'grid') document.getElementById('globalSearch').focus();
-        }
-
-        function updateTaskIndicators() {
-            db.ref('tasks').once('value', snapshot => {
-                allTaskDates.clear();
-                snapshot.forEach(child => {
-                    const t = child.val();
-                    if (!t.completed) allTaskDates.add(t.date);
-                });
-                renderCalendar();
-            });
-        }
 
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
@@ -253,123 +245,84 @@
 
             const year = currentNavDate.getFullYear();
             const month = currentNavDate.getMonth();
-            const todayStr = new Date().toISOString().split('T')[0];
-            const monthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(currentNavDate);
-            document.getElementById('monthDisplay').innerText = `${monthName} ${year}`;
-
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             let startOffset = (firstDay === 0) ? 6 : firstDay - 1;
             let dayCounter = 1;
 
+            document.getElementById('monthDisplay').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentNavDate);
+
             for (let row = 0; row < 6; row++) {
                 if (dayCounter > daysInMonth && row > 0) break;
                 const weekBtn = document.createElement('button');
-                weekBtn.className = 'week-btn' + (selectedWeekIndex === row ? ' active' : '');
+                weekBtn.className = 'week-btn';
                 weekBtn.innerText = 'W'+(row+1);
                 grid.appendChild(weekBtn);
                 
-                let weekDates = [];
                 for (let col = 0; col < 7; col++) {
                     const div = document.createElement('div');
                     if (row * 7 + col < startOffset || dayCounter > daysInMonth) {
                         div.className = 'day-cell other-month';
                     } else {
                         const dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCounter).padStart(2,'0')}`;
-                        div.className = `day-cell ${dKey === selectedDateKey ? 'active' : ''} ${dKey === todayStr ? 'today' : ''} ${allTaskDates.has(dKey) ? 'has-tasks' : ''}`;
+                        div.className = `day-cell ${dKey === selectedDateKey ? 'active' : ''}`;
                         div.innerText = dayCounter;
-                        div.onclick = () => { 
-                            selectedDateKey = dKey; selectedWeekIndex = null; 
-                            currentFilter = {type:'date', val:dKey}; 
-                            runSearch(); renderCalendar(); 
-                        };
-                        weekDates.push(dKey);
+                        
+                        // Drop zone for calendar
+                        div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
+                        div.ondragleave = () => div.classList.remove('drag-over');
+                        div.ondrop = (e) => onCalendarDrop(e, dKey);
+                        
+                        div.onclick = () => { selectedDateKey = dKey; currentFilter = {type:'date', val:dKey}; runSearch(); renderCalendar(); };
                         dayCounter++;
                     }
                     grid.appendChild(div);
                 }
-                const rowDates = [...weekDates];
-                const weekLabel = `W${row+1} ${monthName} ${year}`;
-                weekBtn.onclick = () => { 
-                    selectedWeekIndex = row; selectedDateKey = null; 
-                    currentFilter = {type:'week', val:rowDates, label: weekLabel}; 
-                    runSearch(); renderCalendar(); 
-                };
             }
         }
 
         function runSearch() {
-            const query = document.getElementById('globalSearch').value.toLowerCase();
-            const sort = document.getElementById('sortOrder').value;
             db.ref('tasks').once('value', snapshot => {
-                let activeTasks = [];
-                let completedTasks = [];
+                let active = [], completed = [];
                 snapshot.forEach(child => {
                     const t = child.val();
-                    let inScope = query ? true : (currentFilter.type === 'date' ? (t.date === currentFilter.val) : (currentFilter.val.includes(t.date)));
-                    if (inScope && (!query || `${t.title} ${t.category} ${t.location} ${t.notes || ''}`.toLowerCase().includes(query))) {
+                    if (t.date === currentFilter.val) {
                         const taskObj = { id: child.key, ...t };
-                        if (t.completed) completedTasks.push(taskObj);
-                        else activeTasks.push(taskObj);
+                        if (t.completed) completed.push(taskObj); else active.push(taskObj);
                     }
                 });
-                if (sort === 'newest') {
-                    activeTasks.sort((a,b) => (b.created || 0) - (a.created || 0));
-                    completedTasks.sort((a,b) => (b.created || 0) - (a.created || 0));
-                }
-                displayResults(activeTasks, completedTasks);
+                active.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+                displayResults(active, completed);
             });
         }
 
         function displayResults(active, completed) {
             const list = document.getElementById('task-list');
-            const summaryBar = document.getElementById('week-summary');
-            const printBtn = document.getElementById('printBtn');
-            const query = document.getElementById('globalSearch').value.toLowerCase();
-
-            list.innerHTML = (active.length || completed.length) ? '' : '<p style="text-align:center; color:#444; margin-top:50px;">No tiles found.</p>';
-            document.getElementById('resultCount').innerText = `${active.length + completed.length} item(s)`;
-            
-            if (query) { 
-                document.getElementById('viewTitle').innerText = "Search Results"; 
-                printBtn.style.display = 'none';
-                summaryBar.style.display = 'none';
-            } else {
-                document.getElementById('viewTitle').innerText = currentFilter.type === 'week' ? currentFilter.label : currentFilter.val;
-                printBtn.style.display = 'block';
-                if (active.length > 0) {
-                    summaryBar.style.display = 'flex';
-                    const counts = {};
-                    active.forEach(t => counts[t.location] = (counts[t.location] || 0) + 1);
-                    summaryBar.innerHTML = '<span style="color:#ea2776; font-weight:bold; margin-right:10px;">OPEN TASKS SUMMARY:</span>' + 
-                        Object.keys(counts).map(loc => `<span>${loc}: <span class="summary-count">${counts[loc]}</span></span>`).join('');
-                } else { summaryBar.style.display = 'none'; }
-            }
+            list.innerHTML = '';
+            document.getElementById('viewTitle').innerText = currentFilter.val;
 
             const renderTile = (t) => {
                 const tile = document.createElement('div');
-                tile.className = `task-tile tile-color-${t.color || 0} ${t.completed ? 'is-completed' : ''}`;
+                tile.className = `task-tile ${t.completed ? 'is-completed' : ''}`;
+                tile.draggable = true;
                 tile.innerHTML = `
-                    <div class="tile-actions" style="position:absolute; right:10px; top:10px; display:flex; gap:8px;">
-                        <button class="btn" onclick="editTile('${t.id}')" style="padding:4px 8px">✎</button>
-                        <button class="btn" onclick="toggleComplete('${t.id}', ${t.completed})" style="padding:4px 8px; background:${t.completed ? '#441111' : '#114411'}">
-                            ${t.completed ? '✕' : '✓'}
-                        </button>
-                        <button class="btn" onclick="deleteTask('${t.id}')" style="padding:4px 8px; background:#441111">🗑</button>
-                    </div>
-                    <div style="display:flex; gap:15px;">
-                        <div style="font-size:1.8rem">${t.emoji || '📝'}</div>
-                        <div style="flex:1">
-                            <div class="tile-title">${t.title}</div>
-                            <div class="tile-meta">
-                                <span class="tile-tag">${t.category}</span>
-                                <span style="color:#55ff55">📍 ${t.location}</span>
-                                <span>📅 ${t.date}</span>
-                            </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${t.emoji || '📝'} ${t.title}</strong>
+                        <div>
+                            <button class="btn" onclick="toggleComplete('${t.id}', ${t.completed})" style="padding:2px 5px">✓</button>
+                            <button class="btn" onclick="deleteTask('${t.id}')" style="padding:2px 5px">🗑</button>
                         </div>
                     </div>
-                    ${t.notes ? `<div class="tile-notes">${t.notes}</div>` : ''}
+                    <div style="font-size:0.8rem; color:#888; margin-top:5px;">${t.location} | ${t.category}</div>
                 `;
+
+                // Sorting drop zones
+                tile.ondragstart = (e) => handleTileDragStart(e, t.id, t.completed);
+                tile.ondragend = handleTileDragEnd;
+                tile.ondragover = (e) => { e.preventDefault(); tile.classList.add('drag-over'); };
+                tile.ondragleave = () => tile.classList.remove('drag-over');
+                tile.ondrop = (e) => onTileDrop(e, t.id, t.completed);
+
                 list.appendChild(tile);
             };
 
@@ -386,61 +339,31 @@
         function toggleComplete(id, currentStatus) {
             db.ref(`tasks/${id}`).once('value').then(snap => {
                 const t = snap.val();
-                let updateData = { completed: !currentStatus };
-                if (!currentStatus) {
-                    updateData.originalEmoji = t.emoji || '📝';
-                    updateData.emoji = '✅';
-                } else {
-                    updateData.emoji = t.originalEmoji || '📝';
-                }
-                db.ref(`tasks/${id}`).update(updateData).then(() => {
-                    updateTaskIndicators();
-                    runSearch();
-                });
+                db.ref(`tasks/${id}`).update({ 
+                    completed: !currentStatus, 
+                    emoji: !currentStatus ? '✅' : (t.originalEmoji || '📝') 
+                }).then(runSearch);
             });
         }
 
         function saveTask() {
-            const id = document.getElementById('editTaskId').value;
             const data = {
                 title: document.getElementById('taskTitle').value,
-                category: document.getElementById('taskCategory').value || 'General',
+                category: document.getElementById('taskCategory').value,
                 location: document.getElementById('taskLocation').value,
-                emoji: document.getElementById('taskEmoji').value || '📝',
-                color: document.getElementById('taskColor').value,
                 date: document.getElementById('taskDate').value,
-                notes: document.getElementById('taskNotes').value || '',
-                completed: false
+                notes: document.getElementById('taskNotes').value,
+                completed: false,
+                sortOrder: 999
             };
-            if(!data.title) return alert("Title is required");
-            const ref = id ? db.ref(`tasks/${id}`) : db.ref('tasks').push();
-            if (!id) data.created = Date.now();
-            ref.update(data).then(() => { closeModal(); updateTaskIndicators(); runSearch(); });
+            db.ref('tasks').push(data).then(() => { closeModal(); runSearch(); });
         }
 
-        function deleteTask(id) { if(confirm("Delete permanently?")) db.ref(`tasks/${id}`).remove().then(() => { updateTaskIndicators(); runSearch(); }); }
-
-        function editTile(id) {
-            db.ref(`tasks/${id}`).once('value').then(s => {
-                const t = s.val();
-                document.getElementById('modalTitle').innerText = "Edit Task";
-                document.getElementById('editTaskId').value = id;
-                document.getElementById('taskTitle').value = t.title;
-                document.getElementById('taskCategory').value = t.category;
-                document.getElementById('taskLocation').value = t.location;
-                document.getElementById('taskEmoji').value = t.emoji;
-                document.getElementById('taskColor').value = t.color;
-                document.getElementById('taskDate').value = t.date;
-                document.getElementById('taskNotes').value = t.notes || '';
-                document.getElementById('modal-overlay').style.display = 'flex';
-            });
-        }
-
-        function openCreateModal() { document.getElementById('modalTitle').innerText = "New Task"; document.getElementById('editTaskId').value = ''; document.getElementById('taskDate').value = selectedDateKey || new Date().toISOString().split('T')[0]; document.getElementById('modal-overlay').style.display = 'flex'; }
+        function openCreateModal() { document.getElementById('taskDate').value = selectedDateKey; document.getElementById('modal-overlay').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
         function changeMonth(dir) { currentNavDate.setMonth(currentNavDate.getMonth() + dir); renderCalendar(); }
 
-        updateTaskIndicators();
+        renderCalendar();
         runSearch();
     </script>
 </body>
