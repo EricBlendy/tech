@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPlanner - KIIS Style</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #0a0a0a; color: #f0f0f0; margin: 0; padding: 20px;
+            height: 100vh; display: flex; flex-direction: column;
+        }
+
+        h1 { text-align: center; color: #ea2776; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 2px; }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* --- CALENDAR STYLES --- */
+        .calendar-section {
+            background: #161616; border-radius: 12px; border: 1px solid #333;
+            padding: 20px; display: flex; flex-direction: column;
+        }
+
+        .cal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; color: #ea2776; font-weight: bold;
+        }
+
+        .cal-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+            text-align: center;
+        }
+
+        .day-name { font-size: 0.7rem; color: #666; padding-bottom: 10px; }
+
+        .day-cell {
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            background: #222; border-radius: 4px; cursor: pointer; font-size: 0.9rem;
+            transition: 0.2s; border: 1px solid transparent;
+        }
+
+        .day-cell:hover { background: #333; border-color: #ea2776; }
+        .day-cell.active { background: #ea2776; color: white; font-weight: bold; }
+        .day-cell.today { border: 1px solid #ea2776; color: #ea2776; }
+        .day-cell.other-month { opacity: 0.3; }
+
+        /* --- TASK SECTION --- */
+        .task-section {
+            background: #161616; border-radius: 12px; border: 1px solid #333;
+            display: flex; flex-direction: column; padding: 20px;
+        }
+
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #ea2776; padding-bottom: 10px; margin-bottom: 20px;
+        }
+
+        #task-list { flex-grow: 1; overflow-y: auto; padding-right: 10px; }
+
+        /* --- TILE STYLES --- */
+        .task-tile {
+            background: #222; border-left: 5px solid #444; border-radius: 6px;
+            padding: 15px; margin-bottom: 10px; display: flex; align-items: center;
+            gap: 15px; cursor: grab; transition: transform 0.2s;
+        }
+        .task-tile:active { cursor: grabbing; transform: scale(0.98); }
+
+        .tile-color-0 { border-left-color: #444; }
+        .tile-color-1 { border-left-color: #ff5555; background: #3a1a1a; }
+        .tile-color-2 { border-left-color: #55ff55; background: #1a3a1a; }
+        .tile-color-3 { border-left-color: #5588ff; background: #1a233a; }
+        .tile-color-4 { border-left-color: #ffff55; background: #3a381a; }
+
+        .tile-emoji { font-size: 1.5rem; }
+        .tile-main { flex-grow: 1; }
+        .tile-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 4px; }
+        .tile-meta { font-size: 0.75rem; color: #888; display: flex; gap: 10px; }
+        .tile-category { color: #ea2776; font-weight: bold; text-transform: uppercase; }
+
+        .btn {
+            background: #222; border: 1px solid #444; color: white;
+            padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;
+        }
+        .btn:hover { background: #ea2776; border-color: #ea2776; }
+        .btn-complete { background: #114411; }
+
+        /* Modal */
+        #modal-overlay {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center;
+        }
+        .modal {
+            background: #161616; padding: 30px; border-radius: 12px; border: 2px solid #ea2776;
+            width: 400px; display: flex; flex-direction: column; gap: 15px;
+        }
+        input, select { background: #222; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+    <h1>Task Planner</h1>
+
+    <div class="main-container">
+        <div class="calendar-section">
+            <div class="cal-header">
+                <button class="btn" onclick="changeMonth(-1)">◀</button>
+                <div id="monthDisplay">Month Year</div>
+                <button class="btn" onclick="changeMonth(1)">▶</button>
+            </div>
+            <div class="cal-grid" id="calendarGrid">
+                <div class="day-name">MON</div><div class="day-name">TUE</div><div class="day-name">WED</div>
+                <div class="day-name">THU</div><div class="day-name">FRI</div><div class="day-name">SAT</div><div class="day-name">SUN</div>
+            </div>
+        </div>
+
+        <div class="task-section">
+            <div class="section-header">
+                <h2 id="selectedDateText" style="margin:0">Select a day</h2>
+                <div>
+                    <button class="btn" onclick="openModal()">+ Add Task</button>
+                    <button class="btn" onclick="showCompleted()">Archive</button>
+                </div>
+            </div>
+            <div id="task-list" ondragover="event.preventDefault()">
+                </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay">
+        <div class="modal">
+            <h2 style="color:#ea2776; margin:0">New Task</h2>
+            <input type="text" id="taskTitle" placeholder="Task Name...">
+            <input type="text" id="taskCategory" placeholder="Category (e.g. Production)">
+            <input type="text" id="taskEmoji" placeholder="Emoji (e.g. 🎙️)">
+            <select id="taskColor">
+                <option value="0">Default (Grey)</option>
+                <option value="1">Red (Urgent)</option>
+                <option value="2">Green (Low Priority)</option>
+                <option value="3">Blue (Discussion)</option>
+                <option value="4">Yellow (Waiting)</option>
+            </select>
+            <button class="btn" style="background:#ea2776" onclick="saveTask()">Create Tile</button>
+            <button class="btn" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        const firebaseConfig = {
+            apiKey: "PASTE_YOUR_API_KEY_HERE",
+            databaseURL: "https://radioplanner-d6a88-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentNavDate = new Date();
+        let selectedDateKey = null; // Format: YYYY-MM-DD
+        
+        // --- CALENDAR LOGIC ---
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const monthDisplay = document.getElementById('monthDisplay');
+            
+            // Clear existing cells (keep day names)
+            const dayNames = grid.querySelectorAll('.day-name');
+            grid.innerHTML = '';
+            dayNames.forEach(d => grid.appendChild(d));
+
+            const year = currentNavDate.getFullYear();
+            const month = currentNavDate.getMonth();
+            
+            monthDisplay.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentNavDate);
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            // Adjust for Monday start
+            let startOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+            // Padding for prev month
+            for(let i=0; i < startOffset; i++) {
+                const div = document.createElement('div');
+                div.className = 'day-cell other-month';
+                grid.appendChild(div);
+            }
+
+            // Actual days
+            for(let d=1; d <= daysInMonth; d++) {
+                const div = document.createElement('div');
+                div.className = 'day-cell';
+                const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                
+                div.innerText = d;
+                if(dateKey === selectedDateKey) div.classList.add('active');
+                
+                // Drop zone
+                div.ondragover = (e) => e.preventDefault();
+                div.ondrop = (e) => handleDropOnDate(e, dateKey);
+                
+                div.onclick = () => selectDate(dateKey);
+                grid.appendChild(div);
+            }
+        }
+
+        function changeMonth(dir) {
+            currentNavDate.setMonth(currentNavDate.getMonth() + dir);
+            renderCalendar();
+        }
+
+        function selectDate(key) {
+            selectedDateKey = key;
+            document.getElementById('selectedDateText').innerText = key;
+            renderCalendar();
+            loadTasks(key);
+        }
+
+        // --- TASK LOGIC ---
+        function openModal() { 
+            if(!selectedDateKey) { alert("Select a date first!"); return; }
+            document.getElementById('modal-overlay').style.display = 'flex'; 
+        }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+        function saveTask() {
+            const task = {
+                title: document.getElementById('taskTitle').value,
+                category: document.getElementById('taskCategory').value || 'General',
+                emoji: document.getElementById('taskEmoji').value || '📝',
+                color: document.getElementById('taskColor').value,
+                date: selectedDateKey,
+                created: Date.now(),
+                completed: false
+            };
+            db.ref('tasks').push(task);
+            closeModal();
+            // Clear inputs
+            ['taskTitle', 'taskCategory', 'taskEmoji'].forEach(id => document.getElementById(id).value = '');
+        }
+
+        function loadTasks(dateKey) {
+            const list = document.getElementById('task-list');
+            list.innerHTML = 'Loading...';
+
+            db.ref('tasks').orderByChild('date').equalTo(dateKey).on('value', snapshot => {
+                list.innerHTML = '';
+                const data = snapshot.val();
+                if(!data) { list.innerHTML = '<p style="color:#444">No tasks for this day.</p>'; return; }
+
+                Object.keys(data).forEach(id => {
+                    const t = data[id];
+                    if(t.completed) return; // Skip archived
+
+                    const tile = document.createElement('div');
+                    tile.className = `task-tile tile-color-${t.color}`;
+                    tile.draggable = true;
+                    tile.ondragstart = (e) => e.dataTransfer.setData('taskId', id);
+                    
+                    tile.innerHTML = `
+                        <div class="tile-emoji" onclick="cycleTileColor('${id}', ${t.color})">${t.emoji}</div>
+                        <div class="tile-main">
+                            <div class="tile-title">${t.title}</div>
+                            <div class="tile-meta">
+                                <span class="tile-category">${t.category}</span>
+                                <span>Created: ${new Date(t.created).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-complete" onclick="completeTask('${id}')">✓</button>
+                    `;
+                    list.appendChild(tile);
+                });
+            });
+        }
+
+        function completeTask(id) {
+            db.ref(`tasks/${id}`).update({
+                completed: true,
+                completedAt: Date.now()
+            });
+        }
+
+        function cycleTileColor(id, current) {
+            const next = (parseInt(current) + 1) % 5;
+            db.ref(`tasks/${id}`).update({ color: next });
+        }
+
+        // --- DRAG AND DROP ---
+        function handleDropOnDate(e, newDate) {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData('taskId');
+            if(taskId) {
+                db.ref(`tasks/${taskId}`).update({ date: newDate });
+                alert(`Task moved to ${newDate}`);
+            }
+        }
+
+        function showCompleted() {
+            // Simple redirect or alert for stats - in a full app, this would open a new UI view
+            alert("Completed bucket: Filter Firebase by 'completed: true' to see stats & archived tiles.");
+        }
+
+        // Init
+        renderCalendar();
+    </script>
+</body>
+</html>
