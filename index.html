@@ -9,6 +9,11 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
+        :root {
+            --accent-color: #ea2776;
+            --highlight-color: #55ff55;
+        }
+
         * { box-sizing: border-box; }
         body { 
             font-family: 'Segoe UI', sans-serif; 
@@ -17,11 +22,11 @@
         }
 
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        h1 { color: #ea2776; margin: 0; text-transform: uppercase; font-size: 1.8rem; letter-spacing: 2px; }
+        h1 { color: var(--accent-color); margin: 0; text-transform: uppercase; font-size: 1.8rem; letter-spacing: 2px; }
         
         #search-drawer {
             display: none; background: #161616; padding: 15px; border-radius: 12px; 
-            border: 1px solid #ea2776; margin-bottom: 15px; 
+            border: 1px solid var(--accent-color); margin-bottom: 15px; 
             grid-template-columns: 1fr 200px; gap: 15px;
         }
         .search-input { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; }
@@ -32,30 +37,29 @@
 
         .left-col { display: flex; flex-direction: column; gap: 15px; }
         .calendar-section { background: #161616; border-radius: 12px; border: 1px solid #333; padding: 15px; }
-        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: #ea2776; font-weight: bold; }
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: var(--accent-color); font-weight: bold; }
         
         .cal-grid { display: grid; grid-template-columns: 35px repeat(7, 1fr); gap: 6px; text-align: center; align-items: center; }
         .day-name { font-size: 0.7rem; color: #666; font-weight: bold; padding-bottom: 5px; }
         
         .week-btn { 
-            background: #1a1a1a; color: #ea2776; border: 1px solid #333; border-radius: 4px; 
+            background: #1a1a1a; color: var(--accent-color); border: 1px solid #333; border-radius: 4px; 
             cursor: pointer; font-size: 0.65rem; height: 100%; display: flex; align-items: center; justify-content: center;
         }
-        .week-btn.active { background: #ea2776 !important; color: white !important; font-weight: bold; }
+        .week-btn.active { background: var(--accent-color) !important; color: white !important; font-weight: bold; }
 
         .day-cell { 
             aspect-ratio: 1; display: flex; align-items: center; justify-content: center; 
             background: #222; border-radius: 4px; cursor: pointer; font-size: 0.85rem; 
             transition: 0.2s; border: 2px solid transparent; color: #f0f0f0; position: relative;
         }
-        .day-cell.active { background: #ea2776 !important; color: white !important; font-weight: bold; }
-        .day-cell.today { border: 2px solid #ea2776; color: #ea2776; font-weight: bold; }
-        /* Drag styles for calendar */
-        .day-cell.drag-over { border-color: #55ff55; background: #2a3a2a; }
+        .day-cell.active { background: var(--accent-color) !important; color: white !important; font-weight: bold; }
+        .day-cell.today { border: 2px solid var(--accent-color); color: var(--accent-color); font-weight: bold; }
+        .day-cell.drag-over { border-color: var(--highlight-color); background: #2a3a2a; }
 
         .has-tasks::after {
             content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
-            width: 4px; height: 4px; background-color: #ea2776; border-radius: 50%;
+            width: 4px; height: 4px; background-color: var(--accent-color); border-radius: 50%;
         }
 
         .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
@@ -66,17 +70,12 @@
             margin-bottom: 12px; position: relative; border-top: 1px solid #333; 
             cursor: grab; transition: 0.2s; overflow: hidden;
         }
-        .task-tile.dragging { opacity: 0.5; border: 2px dashed #ea2776; }
+        .task-tile.dragging { opacity: 0.5; border: 2px dashed var(--accent-color); }
         .task-tile.is-completed { opacity: 0.4; filter: grayscale(0.5); border-left-color: #55ff55; }
         
-        .tile-color-1 { border-left-color: #ff5555; }
-        .tile-color-2 { border-left-color: #55ff55; }
-        .tile-color-3 { border-left-color: #5588ff; }
-        .tile-color-4 { border-left-color: #ffff55; }
-
         .tile-title { font-weight: bold; font-size: 1.1rem; color: #fff; margin-bottom: 5px; }
         .tile-meta { font-size: 0.7rem; color: #aaa; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
-        .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: #ea2776; font-weight: bold; }
+        .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: var(--accent-color); font-weight: bold; }
         
         .tile-notes { 
             max-height: 0; opacity: 0; transition: all 0.3s ease-out;
@@ -84,19 +83,18 @@
             color: #ccc; margin-top: 0; border-left: 2px solid #444; white-space: pre-wrap;
             overflow: hidden;
         }
-        .tile-notes a { color: #ea2776; text-decoration: underline; }
-        .task-tile.expanded { cursor: default; }
+        .tile-notes a { color: var(--accent-color); text-decoration: underline; }
         .task-tile.expanded .tile-notes { max-height: 500px; opacity: 1; margin-top: 10px; padding: 8px; }
 
-        .completed-divider { display: flex; align-items: center; margin: 30px 0 15px 0; color: #ea2776; font-size: 0.7rem; font-weight: bold; letter-spacing: 2px; }
-        .completed-divider::after { content: ""; flex: 1; height: 1px; background: #333; margin-left: 15px; }
-
         .btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn:hover { background: #ea2776; }
+        .btn:hover { background: var(--accent-color); }
 
-        #modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal { background: #161616; padding: 25px; border-radius: 12px; border: 2px solid #ea2776; width: 500px; display: flex; flex-direction: column; gap: 12px; }
+        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        .modal { background: #161616; padding: 25px; border-radius: 12px; border: 2px solid var(--accent-color); width: 500px; display: flex; flex-direction: column; gap: 12px; }
         input, select, textarea { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-family: inherit; }
+
+        .settings-row { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 10px; border-radius: 8px; }
+        .color-preview { width: 30px; height: 30px; border-radius: 4px; border: 1px solid #fff; cursor: pointer; }
     </style>
 </head>
 <body onkeydown="handleGlobalKeys(event)">
@@ -104,8 +102,9 @@
     <header>
         <h1>Task Planner</h1>
         <div style="display:flex; gap:10px;">
-            <button class="btn" style="background:#ea2776; border:none;" onclick="openCreateModal()">+ CREATE NEW TASK</button>
+            <button class="btn" style="background:var(--accent-color); border:none;" onclick="openCreateModal()">+ CREATE NEW TASK</button>
             <button class="btn" onclick="toggleSearch()">🔍 Search</button>
+            <button class="btn" onclick="openSettings()">⚙️ Settings</button>
         </div>
     </header>
 
@@ -135,7 +134,7 @@
         </div>
 
         <div class="task-section">
-            <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #ea2776; padding-bottom:10px; margin-bottom:20px;">
+            <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent-color); padding-bottom:10px; margin-bottom:20px;">
                 <h2 id="viewTitle" style="margin:0; font-size: 1.2rem;">Today</h2>
                 <div id="resultCount" style="font-size: 0.8rem; color: #888;"></div>
             </div>
@@ -143,9 +142,24 @@
         </div>
     </div>
 
-    <div id="modal-overlay" onkeydown="handleModalKeys(event)">
+    <div id="settings-overlay" class="modal-overlay">
         <div class="modal">
-            <h2 id="modalTitle" style="color:#ea2776; margin:0">New Task</h2>
+            <h2 style="color:var(--accent-color); margin:0">UI Settings</h2>
+            <div class="settings-row">
+                <span>Accent Color</span>
+                <input type="color" id="accentPicker" onchange="updateColors()">
+            </div>
+            <div class="settings-row">
+                <span>Drag Highlight Color</span>
+                <input type="color" id="highlightPicker" onchange="updateColors()">
+            </div>
+            <button class="btn" style="background:var(--accent-color); padding:15px;" onclick="closeSettings()">SAVE & CLOSE</button>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay" onkeydown="handleModalKeys(event)">
+        <div class="modal">
+            <h2 id="modalTitle" style="color:var(--accent-color); margin:0">New Task</h2>
             <input type="hidden" id="editTaskId">
             <input type="text" id="taskTitle" placeholder="Title (Required)">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
@@ -155,14 +169,8 @@
                 </select>
             </div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div>
-                    <label style="font-size:0.7rem; color:#888;">Task Date</label>
-                    <input type="date" id="taskDate" style="width:100%">
-                </div>
-                <div>
-                    <label style="font-size:0.7rem; color:#888;">Deadline</label>
-                    <input type="date" id="taskDeadline" style="width:100%">
-                </div>
+                <div><label style="font-size:0.7rem; color:#888;">Task Date</label><input type="date" id="taskDate" style="width:100%"></div>
+                <div><label style="font-size:0.7rem; color:#888;">Deadline</label><input type="date" id="taskDeadline" style="width:100%"></div>
             </div>
             <div style="display:grid; grid-template-columns: 80px 1fr; gap:10px;">
                 <input type="text" id="taskEmoji" placeholder="📝">
@@ -171,7 +179,7 @@
                 </select>
             </div>
             <textarea id="taskNotes" placeholder="Notes..."></textarea>
-            <button class="btn" style="background:#ea2776; padding:15px;" onclick="saveTask()">SAVE (ENTER)</button>
+            <button class="btn" style="background:var(--accent-color); padding:15px;" onclick="saveTask()">SAVE (ENTER)</button>
             <button class="btn" onclick="closeModal()">CANCEL</button>
         </div>
     </div>
@@ -191,59 +199,58 @@
         let allTaskDates = new Set();
         let draggedTaskId = null;
 
+        // Settings Management
+        function initSettings() {
+            const acc = localStorage.getItem('accent') || '#ea2776';
+            const high = localStorage.getItem('highlight') || '#55ff55';
+            document.documentElement.style.setProperty('--accent-color', acc);
+            document.documentElement.style.setProperty('--highlight-color', high);
+            document.getElementById('accentPicker').value = acc;
+            document.getElementById('highlightPicker').value = high;
+        }
+
+        function updateColors() {
+            const acc = document.getElementById('accentPicker').value;
+            const high = document.getElementById('highlightPicker').value;
+            document.documentElement.style.setProperty('--accent-color', acc);
+            document.documentElement.style.setProperty('--highlight-color', high);
+            localStorage.setItem('accent', acc);
+            localStorage.setItem('highlight', high);
+        }
+
+        function openSettings() { document.getElementById('settings-overlay').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settings-overlay').style.display = 'none'; }
+
         function handleGlobalKeys(e) {
             if (e.key === "Enter" && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { openCreateModal(); }
-            if (e.key === "Escape") { exitSearchToToday(); closeModal(); }
+            if (e.key === "Escape") { closeModal(); closeSettings(); }
         }
         function handleModalKeys(e) { if (e.key === "Enter" && e.target.tagName !== 'TEXTAREA') { saveTask(); } }
 
-        function exitSearchToToday() {
-            document.getElementById('globalSearch').value = '';
-            document.getElementById('search-drawer').style.display = 'none';
-            const today = new Date().toISOString().split('T')[0];
-            currentNavDate = new Date();
-            selectedDateKey = today; activeWeekIdx = null;
-            currentFilter = { type: 'date', val: today };
-            renderCalendar(); runSearch();
-        }
-
-        // --- NEW: URL Linkifier Function ---
         function linkify(text) {
             if(!text) return "";
             const urlRegex = /(https?:\/\/[^\s]+)/g;
-            return text.replace(urlRegex, (url) => {
-                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-            });
+            return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
         function getRemainingTime(deadlineStr) {
             if (!deadlineStr) return "";
-            const today = new Date();
-            today.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
             const dl = new Date(deadlineStr + 'T00:00:00');
             const diff = Math.ceil((dl - today) / (1000 * 60 * 60 * 24));
             if (diff < 0) return `<span style="color:#ff5555; font-weight:bold;">⚠️ OVERDUE (${Math.abs(diff)}d)</span>`;
             if (diff === 0) return `<span style="color:#ffcc00; font-weight:bold;">🔥 Due Today</span>`;
-            return `<span style="color:#55ff55;">⏰ ${diff} day${diff === 1 ? '' : 's'} remaining</span>`;
-        }
-
-        function formatDisplayDate(dateStr) {
-            if(!dateStr) return "";
-            const d = new Date(dateStr + 'T00:00:00');
-            const ord = (n) => n + (n > 10 && n < 20 ? 'th' : {1: 'st', 2: 'nd', 3: 'rd'}[n % 10] || 'th');
-            return `${ord(d.getDate())} ${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
+            return `<span style="color:var(--highlight-color);">⏰ ${diff} day${diff === 1 ? '' : 's'} remaining</span>`;
         }
 
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             const headers = Array.from(grid.children).slice(0, 8);
             grid.innerHTML = ''; headers.forEach(h => grid.appendChild(h));
-
             const year = currentNavDate.getFullYear();
             const month = currentNavDate.getMonth();
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('monthDisplay').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentNavDate);
-
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             let startOffset = (firstDay === 0) ? 6 : firstDay - 1;
@@ -255,7 +262,6 @@
                 weekBtn.className = `week-btn ${activeWeekIdx === row ? 'active' : ''}`;
                 weekBtn.innerText = 'W'+(row+1);
                 grid.appendChild(weekBtn);
-                
                 for (let col = 0; col < 7; col++) {
                     const div = document.createElement('div');
                     if (row * 7 + col < startOffset || dayCounter > daysInMonth) {
@@ -264,33 +270,19 @@
                         const dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCounter).padStart(2,'0')}`;
                         div.className = `day-cell ${dKey === selectedDateKey ? 'active' : ''} ${dKey === todayStr ? 'today' : ''} ${allTaskDates.has(dKey) ? 'has-tasks' : ''}`;
                         div.innerText = dayCounter;
-                        
-                        // RESTORED: Calendar Drag-and-Drop
                         div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
                         div.ondragleave = () => div.classList.remove('drag-over');
                         div.ondrop = (e) => {
                             e.preventDefault(); div.classList.remove('drag-over');
                             db.ref(`tasks/${draggedTaskId}`).update({ date: dKey }).then(() => { runSearch(); updateTaskIndicators(); });
                         };
-
-                        div.onclick = () => { 
-                            document.getElementById('search-drawer').style.display = 'none';
-                            selectedDateKey = dKey; activeWeekIdx = null;
-                            currentFilter = {type:'date', val:dKey}; 
-                            renderCalendar(); runSearch(); 
-                        };
+                        div.onclick = () => { selectedDateKey = dKey; activeWeekIdx = null; currentFilter = {type:'date', val:dKey}; renderCalendar(); runSearch(); };
                         dayCounter++;
                     }
                     grid.appendChild(div);
                 }
-                const rowIdx = row;
-                weekBtn.onclick = () => { 
-                    document.getElementById('search-drawer').style.display = 'none';
-                    selectedDateKey = null; activeWeekIdx = rowIdx; 
-                    currentFilter = {type:'week', val:[], label: `W${rowIdx+1} ${document.getElementById('monthDisplay').innerText}`}; 
-                    // (Logic for week dates here)
-                    renderCalendar(); runSearch(); 
-                };
+                const rIdx = row;
+                weekBtn.onclick = () => { selectedDateKey = null; activeWeekIdx = rIdx; currentFilter = {type:'week', val:[], label: `Week ${rIdx+1}`}; renderCalendar(); runSearch(); };
             }
         }
 
@@ -307,45 +299,36 @@
                 let active = [], completed = [];
                 snapshot.forEach(child => {
                     const t = child.val();
-                    let inScope = query ? true : (currentFilter.type === 'date' ? (t.date === currentFilter.val) : (currentFilter.val.includes(t.date)));
-                    if (inScope && (!query || `${t.title} ${t.category} ${t.location}`.toLowerCase().includes(query))) {
+                    let inScope = query ? true : (t.date === currentFilter.val);
+                    if (inScope && (!query || `${t.title} ${t.category}`.toLowerCase().includes(query))) {
                         const taskObj = { id: child.key, ...t };
                         if (t.completed) completed.push(taskObj); else active.push(taskObj);
                     }
                 });
                 if (sort === 'newest') active.sort((a,b) => b.created - a.created);
-                else if (sort === 'oldest') active.sort((a,b) => a.created - b.created);
                 else active.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-                displayResults(active, completed, !!query);
+                displayResults(active, completed);
             });
         }
 
-        function displayResults(active, completed, isSearching) {
+        function displayResults(active, completed) {
             const list = document.getElementById('task-list');
             list.innerHTML = '';
-            document.getElementById('viewTitle').innerText = isSearching ? "Search Results" : formatDisplayDate(currentFilter.val);
             document.getElementById('resultCount').innerText = `${active.length + completed.length} items`;
-
             const renderTile = (t) => {
                 const tile = document.createElement('div');
                 tile.className = `task-tile tile-color-${t.color || 0} ${t.completed ? 'is-completed' : ''}`;
                 tile.draggable = true;
                 tile.onclick = (e) => { if(!e.target.closest('.btn') && !e.target.closest('a')) tile.classList.toggle('expanded'); };
-                
                 tile.ondragstart = (e) => { draggedTaskId = t.id; tile.classList.add('dragging'); };
                 tile.ondragend = () => tile.classList.remove('dragging');
-                tile.ondragover = (e) => { e.preventDefault(); tile.style.borderTop = "4px solid #ea2776"; };
+                tile.ondragover = (e) => { e.preventDefault(); tile.style.borderTop = `4px solid var(--accent-color)`; };
                 tile.ondragleave = () => tile.style.borderTop = "";
-                tile.ondrop = (e) => {
-                    e.preventDefault(); tile.style.borderTop = "";
-                    reorderTasks(draggedTaskId, t.id);
-                };
-
+                tile.ondrop = (e) => { e.preventDefault(); reorderTasks(draggedTaskId, t.id); };
                 tile.innerHTML = `
                     <div style="position:absolute; right:10px; top:10px; display:flex; gap:8px;">
-                        <button class="btn" onclick="editTile('${t.id}')" style="padding:4px 8px">✎</button>
-                        <button class="btn" onclick="toggleComplete('${t.id}', ${t.completed})" style="padding:4px 8px">✓</button>
-                        <button class="btn" onclick="deleteTask('${t.id}')" style="padding:4px 8px">🗑</button>
+                        <button class="btn" onclick="editTile('${t.id}')">✎</button>
+                        <button class="btn" onclick="toggleComplete('${t.id}', ${t.completed})">✓</button>
                     </div>
                     <div style="display:flex; gap:15px;">
                         <div style="font-size:2rem">${t.emoji || '📝'}</div>
@@ -353,35 +336,29 @@
                             <div class="tile-title">${t.title}</div>
                             <div class="tile-meta">
                                 <span class="tile-tag">${t.category || 'General'}</span>
-                                <span style="color:#55ff55">📍 ${t.location}</span>
+                                <span style="color:var(--highlight-color)">📍 ${t.location}</span>
                                 ${getRemainingTime(t.deadline)}
                             </div>
                         </div>
                     </div>
-                    <div class="tile-notes">${linkify(t.notes) || 'No extra notes.'}</div>
+                    <div class="tile-notes">${linkify(t.notes) || 'No notes.'}</div>
                 `;
                 list.appendChild(tile);
             };
             active.forEach(renderTile);
             if (completed.length > 0) {
-                const div = document.createElement('div');
-                div.className = 'completed-divider'; div.innerText = 'COMPLETED TASKS';
-                list.appendChild(div);
+                const div = document.createElement('div'); div.className = 'completed-divider';
+                div.innerHTML = '<hr>'; list.appendChild(div);
                 completed.forEach(renderTile);
             }
         }
 
         function reorderTasks(dragId, targetId) {
             db.ref('tasks').once('value', snapshot => {
-                let tasks = [];
-                snapshot.forEach(c => {
-                    const t = c.val();
-                    if(t.date === currentFilter.val && !t.completed) tasks.push({id: c.key, ...t});
-                });
+                let tasks = []; snapshot.forEach(c => { if(c.val().date === currentFilter.val) tasks.push({id: c.key, ...c.val()}); });
                 tasks.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
                 const fromIdx = tasks.findIndex(t => t.id === dragId);
                 const toIdx = tasks.findIndex(t => t.id === targetId);
-                if (fromIdx < 0 || toIdx < 0) return;
                 const [moved] = tasks.splice(fromIdx, 1);
                 tasks.splice(toIdx, 0, moved);
                 tasks.forEach((t, i) => db.ref(`tasks/${t.id}`).update({ sortOrder: i }));
@@ -391,43 +368,36 @@
 
         function saveTask() {
             const id = document.getElementById('editTaskId').value;
-            const title = document.getElementById('taskTitle').value;
-            if(!title) return alert("Title required");
             const data = {
-                title, category: document.getElementById('taskCategory').value,
+                title: document.getElementById('taskTitle').value,
+                category: document.getElementById('taskCategory').value,
                 location: document.getElementById('taskLocation').value,
-                emoji: document.getElementById('taskEmoji').value || '📝',
-                color: document.getElementById('taskColor').value,
                 date: document.getElementById('taskDate').value,
                 deadline: document.getElementById('taskDeadline').value,
                 notes: document.getElementById('taskNotes').value,
+                emoji: document.getElementById('taskEmoji').value || '📝',
+                color: document.getElementById('taskColor').value,
                 completed: false, created: Date.now()
             };
             const ref = id ? db.ref(`tasks/${id}`) : db.ref('tasks').push();
             ref.update(data).then(() => { closeModal(); runSearch(); updateTaskIndicators(); });
         }
 
-        function openCreateModal() { 
-            document.getElementById('modalTitle').innerText = 'New Task'; // FIXED: Reset title
-            ['editTaskId','taskTitle','taskCategory','taskEmoji','taskNotes','taskDeadline'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('taskLocation').value = 'Brisbane';
-            document.getElementById('taskColor').value = '0';
-            document.getElementById('taskEmoji').value = '📝';
-            document.getElementById('taskDate').value = selectedDateKey || new Date().toISOString().split('T')[0];
+        function openCreateModal() {
+            document.getElementById('modalTitle').innerText = 'New Task';
+            ['editTaskId','taskTitle','taskCategory','taskEmoji','taskNotes','taskDeadline'].forEach(i => document.getElementById(i).value = '');
+            document.getElementById('taskDate').value = selectedDateKey;
             document.getElementById('modal-overlay').style.display = 'flex';
-            document.getElementById('taskTitle').focus();
         }
 
         function editTile(id) {
-            db.ref(`tasks/${id}`).once('value').then(s => {
+            db.ref(`tasks/${id}`).once('value', s => {
                 const t = s.val();
-                document.getElementById('modalTitle').innerText = 'Edit Task'; // FIXED: Change title for edit
+                document.getElementById('modalTitle').innerText = 'Edit Task';
                 document.getElementById('editTaskId').value = id;
                 document.getElementById('taskTitle').value = t.title;
                 document.getElementById('taskCategory').value = t.category;
                 document.getElementById('taskLocation').value = t.location;
-                document.getElementById('taskEmoji').value = t.emoji;
-                document.getElementById('taskColor').value = t.color;
                 document.getElementById('taskDate').value = t.date;
                 document.getElementById('taskDeadline').value = t.deadline || '';
                 document.getElementById('taskNotes').value = t.notes || '';
@@ -435,18 +405,12 @@
             });
         }
 
-        function toggleComplete(id, cur) {
-            db.ref(`tasks/${id}`).once('value').then(s => {
-                const t = s.val();
-                db.ref(`tasks/${id}`).update({ completed: !cur, emoji: !cur ? '✅' : (t.originalEmoji || '📝'), originalEmoji: !cur ? (t.emoji || '📝') : t.originalEmoji }).then(runSearch);
-            });
-        }
-
-        function deleteTask(id) { if(confirm("Delete?")) db.ref(`tasks/${id}`).remove().then(() => { runSearch(); updateTaskIndicators(); }); }
+        function toggleComplete(id, cur) { db.ref(`tasks/${id}`).update({ completed: !cur }).then(runSearch); }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
         function changeMonth(dir) { currentNavDate.setMonth(currentNavDate.getMonth() + dir); renderCalendar(); }
         function updateTaskIndicators() { db.ref('tasks').once('value', snapshot => { allTaskDates.clear(); snapshot.forEach(c => { if(!c.val().completed) allTaskDates.add(c.val().date); }); renderCalendar(); }); }
 
+        initSettings();
         updateTaskIndicators();
         runSearch();
     </script>
