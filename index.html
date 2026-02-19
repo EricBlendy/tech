@@ -30,14 +30,13 @@
             display: grid; grid-template-columns: 420px 1fr; gap: 20px; flex-grow: 1; overflow: hidden;
         }
 
-        /* --- FIXED CALENDAR ALIGNMENT --- */
         .left-col { display: flex; flex-direction: column; gap: 15px; }
         .calendar-section { background: #161616; border-radius: 12px; border: 1px solid #333; padding: 15px; }
         .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: #ea2776; font-weight: bold; }
         
         .cal-grid { 
             display: grid; 
-            grid-template-columns: 35px repeat(7, 1fr); /* Fixed width for week column */
+            grid-template-columns: 35px repeat(7, 1fr); 
             gap: 6px; 
             text-align: center; 
             align-items: center;
@@ -45,40 +44,36 @@
         .day-name { font-size: 0.7rem; color: #666; font-weight: bold; padding-bottom: 5px; }
         
         .week-btn { 
-            background: #1a1a1a; 
-            color: #ea2776; 
-            border: 1px solid #333; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 0.65rem; 
-            height: 100%; /* Match height of day cells */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-            margin-right: 4px; /* Slight separation from days */
+            background: #1a1a1a; color: #ea2776; border: 1px solid #333; border-radius: 4px; 
+            cursor: pointer; font-size: 0.65rem; height: 100%; display: flex;
+            align-items: center; justify-content: center; transition: 0.2s; margin-right: 4px;
         }
-        .week-btn:hover { border-color: #ea2776; }
         .week-btn.active { background: #ea2776; color: white; border-color: #ea2776; font-weight: bold; }
 
         .day-cell { 
-            aspect-ratio: 1; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            background: #222; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 0.85rem; 
-            transition: 0.2s; 
-            border: 1px solid transparent; 
-            color: #f0f0f0; 
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center; 
+            background: #222; border-radius: 4px; cursor: pointer; font-size: 0.85rem; 
+            transition: 0.2s; border: 1px solid transparent; color: #f0f0f0; 
+            position: relative; /* Needed for the dot positioning */
         }
         .day-cell.active { background: #ea2776 !important; color: white !important; font-weight: bold; }
         .day-cell.today { border: 2px solid #ea2776; color: #ea2776; font-weight: bold; }
         .day-cell.other-month { opacity: 0.1; pointer-events: none; }
 
-        /* --- TASK SECTION --- */
+        /* --- THE PINK DOT --- */
+        .has-tasks::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background-color: #ea2776;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(234, 39, 118, 0.5);
+        }
+        .day-cell.active.has-tasks::after { background-color: white; } /* Make dot white when background is pink */
+
         .task-section { background: #161616; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; padding: 20px; overflow: hidden; position: relative; }
         .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ea2776; padding-bottom: 10px; margin-bottom: 20px; }
         #task-list { flex-grow: 1; overflow-y: auto; padding-right: 10px; }
@@ -93,6 +88,7 @@
         .tile-title { font-weight: bold; font-size: 1.1rem; color: #fff; margin-bottom: 5px; }
         .tile-meta { font-size: 0.7rem; color: #aaa; display: flex; gap: 10px; margin-top: 8px; }
         .tile-tag { background: #000; padding: 2px 6px; border-radius: 4px; color: #ea2776; font-weight: bold; }
+        .tile-notes { background: #1a1a1a; padding: 8px; border-radius: 4px; font-size: 0.85rem; color: #ccc; margin-top: 10px; border-left: 2px solid #444; white-space: pre-wrap; }
         
         .btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
         .btn:hover { background: #ea2776; border-color: #ea2776; }
@@ -197,8 +193,8 @@
         let selectedDateKey = new Date().toISOString().split('T')[0];
         let selectedWeekIndex = null;
         let currentFilter = { type: 'date', val: selectedDateKey };
+        let allTaskDates = new Set(); // Stores dates that have tasks
 
-        // --- KEYBOARD LISTENERS ---
         document.addEventListener('keydown', (e) => {
             if (e.key === "Escape") {
                 closeModal();
@@ -225,6 +221,18 @@
             if(drawer.style.display === 'grid') document.getElementById('globalSearch').focus();
         }
 
+        // --- FETCH DATES WITH TASKS ---
+        function updateTaskIndicators() {
+            db.ref('tasks').once('value', snapshot => {
+                allTaskDates.clear();
+                snapshot.forEach(child => {
+                    const t = child.val();
+                    if (!t.completed) allTaskDates.add(t.date);
+                });
+                renderCalendar();
+            });
+        }
+
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             const headers = Array.from(grid.children).slice(0, 8);
@@ -245,7 +253,6 @@
             for (let row = 0; row < 6; row++) {
                 if (dayCounter > daysInMonth && row > 0) break;
                 
-                // Create W# button for the row
                 const weekBtn = document.createElement('button');
                 weekBtn.className = 'week-btn' + (selectedWeekIndex === row ? ' active' : '');
                 weekBtn.innerText = 'W'+(row+1);
@@ -258,7 +265,12 @@
                         div.className = 'day-cell other-month';
                     } else {
                         const dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCounter).padStart(2,'0')}`;
-                        div.className = 'day-cell' + (dKey === selectedDateKey ? ' active' : '') + (dKey === todayStr ? ' today' : '');
+                        let classList = 'day-cell';
+                        if (dKey === selectedDateKey) classList += ' active';
+                        if (dKey === todayStr) classList += ' today';
+                        if (allTaskDates.has(dKey)) classList += ' has-tasks'; // Add Dot Class
+                        
+                        div.className = classList;
                         div.innerText = dayCounter;
                         div.onclick = () => { 
                             document.getElementById('globalSearch').value = ''; 
@@ -274,7 +286,6 @@
                     grid.appendChild(div);
                 }
                 
-                // Assign week filter to the button
                 const rowDates = [...weekDates]; 
                 const weekLabel = `W${row+1} ${monthName} ${year}`;
                 weekBtn.onclick = () => { 
@@ -349,7 +360,7 @@
                             </div>
                         </div>
                     </div>
-                    ${t.notes ? `<div class="tile-notes" style="background: #1a1a1a; padding: 8px; border-radius: 4px; font-size: 0.85rem; color: #ccc; margin-top: 10px; border-left: 2px solid #444; white-space: pre-wrap;">${displayNotes}</div>` : ''}
+                    ${t.notes ? `<div class="tile-notes">${displayNotes}</div>` : ''}
                 `;
                 list.appendChild(tile);
             });
@@ -370,7 +381,7 @@
             if(!data.title) return alert("Title is required");
             const ref = id ? db.ref(`tasks/${id}`) : db.ref('tasks').push();
             if (!id) data.created = Date.now();
-            ref.update(data).then(() => { closeModal(); runSearch(); });
+            ref.update(data).then(() => { closeModal(); updateTaskIndicators(); runSearch(); });
         }
 
         function editTile(id) {
@@ -390,8 +401,8 @@
         }
 
         function completeTask(id) {
-            if (currentFilter.type === 'archive') { if(confirm("Delete permanently?")) db.ref(`tasks/${id}`).remove().then(runSearch); }
-            else { db.ref(`tasks/${id}`).update({ completed: true, completedAt: Date.now() }).then(runSearch); }
+            if (currentFilter.type === 'archive') { if(confirm("Delete permanently?")) db.ref(`tasks/${id}`).remove().then(() => { updateTaskIndicators(); runSearch(); }); }
+            else { db.ref(`tasks/${id}`).update({ completed: true, completedAt: Date.now() }).then(() => { updateTaskIndicators(); runSearch(); }); }
         }
 
         function openCreateModal() { document.getElementById('modalTitle').innerText = "New Task"; document.getElementById('editTaskId').value = ''; document.getElementById('taskDate').value = selectedDateKey || new Date().toISOString().split('T')[0]; document.getElementById('modal-overlay').style.display = 'flex'; }
@@ -399,7 +410,7 @@
         function openArchive() { document.getElementById('globalSearch').value = ''; currentFilter = {type:'archive'}; selectedDateKey = null; selectedWeekIndex = null; runSearch(); renderCalendar(); }
         function changeMonth(dir) { currentNavDate.setMonth(currentNavDate.getMonth() + dir); renderCalendar(); }
 
-        renderCalendar();
+        updateTaskIndicators(); // Initial load
         runSearch();
     </script>
 </body>
